@@ -1,0 +1,189 @@
+.contact-page {
+  padding: 6rem 0 4rem;
+  min-height: 100vh;
+}
+
+.contact-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.contact-header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.contact-header p {
+  color: var(--text-secondary);
+  font-size: 1.125rem;
+}
+
+.contact-layout {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 3rem;
+}
+
+@media (max-width: 1024px) {
+  .contact-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.contact-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.info-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  padding: 1.5rem;
+  transition: all var(--transition-fast);
+}
+
+.info-card:hover {
+  border-color: var(--color-primary);
+}
+
+.info-icon {
+  font-size: 1.5rem;
+  color: var(--color-primary);
+  margin-bottom: 1rem;
+}
+
+.info-card h3 {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.info-card p {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.info-card a {
+  color: var(--text-secondary);
+  transition: color var(--transition-fast);
+}
+
+.info-card a:hover {
+  color: var(--color-primary);
+}
+
+.contact-form {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  padding: 2rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 640px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.contact-form .btn {
+  margin-top: 1rem;
+}
+
+.success-message {
+  max-width: 500px;
+  margin: 4rem auto;
+  text-align: center;
+  padding: 3rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-xl);
+}
+
+.success-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(34, 197, 94, 0.1);
+  border: 2px solid var(--color-success);
+  border-radius: 50%;
+  color: var(--color-success);
+  font-size: 2rem;
+}
+
+.success-message h2 {
+  margin-bottom: 0.5rem;
+}
+
+.success-message p {
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+}
+
+.success-message .whatsapp-info {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+}
+
+.success-message .btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.btn-whatsapp {
+  background: #25D366 !important;
+  border-color: #25D366 !important;
+  color: white !important;
+}
+
+.btn-whatsapp:hover {
+  background: #128C7E !important;
+  border-color: #128C7E !important;
+}
+
+.btn-whatsapp svg {
+  font-size: 1.25rem;
+}
+
+.btn-whatsapp.sent {
+  background: #128C7E !important;
+  border-color: #128C7E !important;
+}
+
+.whatsapp-confirmed {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: var(--color-success);
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.whatsapp-confirmed svg {
+  font-size: 1rem;
+}
+
+.success-actions {
+  margin-top: 1rem;
+}
+
+.success-actions .btn {
+  margin: 0;
+}

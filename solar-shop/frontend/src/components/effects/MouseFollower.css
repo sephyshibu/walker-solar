@@ -1,0 +1,138 @@
+.mouse-follower-container {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  overflow: hidden;
+}
+
+/* Main glow effect */
+.cursor-glow {
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(
+    circle,
+    rgba(245, 158, 11, 0.15) 0%,
+    rgba(245, 158, 11, 0.05) 30%,
+    transparent 70%
+  );
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  filter: blur(20px);
+}
+
+.cursor-glow.visible {
+  opacity: 1;
+}
+
+/* Center dot */
+.cursor-dot {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  transform: translate(-50%, -50%);
+  background: var(--color-primary);
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.1s ease;
+  box-shadow: 
+    0 0 10px var(--color-primary),
+    0 0 20px var(--color-primary),
+    0 0 30px rgba(245, 158, 11, 0.5);
+}
+
+.cursor-dot.visible {
+  opacity: 1;
+}
+
+/* Outer ring */
+.cursor-ring {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  transform: translate(-50%, -50%);
+  border: 2px solid rgba(245, 158, 11, 0.5);
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.3s ease, width 0.2s ease, height 0.2s ease;
+  animation: pulse-ring 2s ease-in-out infinite;
+}
+
+.cursor-ring.visible {
+  opacity: 1;
+}
+
+@keyframes pulse-ring {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 0.3;
+  }
+}
+
+/* Trailing particles */
+.cursor-particle {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(
+    135deg,
+    var(--color-primary) 0%,
+    #fbbf24 50%,
+    #f59e0b 100%
+  );
+  border-radius: 50%;
+  box-shadow: 
+    0 0 6px var(--color-primary),
+    0 0 12px rgba(245, 158, 11, 0.4);
+  animation: sparkle 0.5s ease-out forwards;
+}
+
+@keyframes sparkle {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(0);
+  }
+}
+
+/* Interactive element hover effects */
+a:hover ~ .mouse-follower-container .cursor-dot,
+button:hover ~ .mouse-follower-container .cursor-dot {
+  transform: translate(-50%, -50%) scale(1.5);
+}
+
+a:hover ~ .mouse-follower-container .cursor-ring,
+button:hover ~ .mouse-follower-container .cursor-ring {
+  width: 60px;
+  height: 60px;
+  border-color: var(--color-primary);
+}
+
+/* Disable on mobile/touch devices */
+@media (hover: none) and (pointer: coarse) {
+  .mouse-follower-container {
+    display: none;
+  }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .cursor-glow,
+  .cursor-dot,
+  .cursor-ring,
+  .cursor-particle {
+    animation: none;
+    transition: none;
+  }
+  
+  .mouse-follower-container {
+    display: none;
+  }
+}

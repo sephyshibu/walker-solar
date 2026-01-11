@@ -1,0 +1,87 @@
+.profile-page {
+  padding: 6rem 0 4rem;
+  min-height: 100vh;
+}
+
+.profile-page h1 {
+  font-size: 2rem;
+  margin-bottom: 2rem;
+}
+
+.profile-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .profile-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.profile-sidebar {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  padding: 2rem;
+  text-align: center;
+}
+
+.profile-avatar {
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-tertiary);
+  border-radius: 50%;
+  font-size: 2.5rem;
+  color: var(--color-primary);
+}
+
+.profile-sidebar h2 {
+  font-size: 1.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.profile-sidebar p {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.profile-form {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  padding: 2rem;
+}
+
+.profile-form h3 {
+  font-size: 1.125rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.profile-form h3:not(:first-child) {
+  margin-top: 2rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 640px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.profile-form .btn {
+  margin-top: 1.5rem;
+}

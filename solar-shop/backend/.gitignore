@@ -1,0 +1,50 @@
+# ===========================================
+# BACKEND .gitignore
+# ===========================================
+
+# Dependencies
+node_modules/
+
+# Environment variables (VERY IMPORTANT!)
+.env
+.env.local
+.env.development
+.env.production
+.env.*.local
+
+# Build output
+dist/
+build/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory
+coverage/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Uploads folder (if storing locally)
+uploads/
+!uploads/.gitkeep
+
+# Temporary files
+tmp/
+temp/
+*.tmp

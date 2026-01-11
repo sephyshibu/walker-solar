@@ -1,0 +1,95 @@
+.wishlist-page {
+  padding: 6rem 0 4rem;
+  min-height: 100vh;
+}
+
+.wishlist-page h1 {
+  font-size: 2rem;
+  margin-bottom: 2rem;
+}
+
+.empty-wishlist {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: var(--bg-card);
+  border-radius: var(--border-radius-lg);
+}
+
+.empty-wishlist .empty-icon {
+  font-size: 4rem;
+  color: var(--border-color);
+  margin-bottom: 1rem;
+}
+
+.empty-wishlist h3 {
+  margin-bottom: 0.5rem;
+}
+
+.empty-wishlist p {
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+}
+
+.wishlist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.wishlist-item {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  transition: all var(--transition-fast);
+}
+
+.wishlist-item:hover {
+  border-color: var(--color-primary);
+}
+
+.wishlist-item .item-image {
+  width: 100px;
+  height: 100px;
+  flex-shrink: 0;
+  border-radius: var(--border-radius-md);
+  overflow: hidden;
+}
+
+.wishlist-item .item-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.wishlist-item .item-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.wishlist-item h3 {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+.wishlist-item .item-price {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  margin-bottom: auto;
+}
+
+.wishlist-item .item-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.wishlist-item .remove-btn {
+  padding: 0.5rem;
+}

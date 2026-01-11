@@ -1,0 +1,42 @@
+# ===========================================
+# FRONTEND .gitignore
+# ===========================================
+
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+.env.local
+.env.development
+.env.production
+.env.*.local
+
+# Build output
+build/
+dist/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Runtime data
+.pnp/
+.pnp.js
+
+# Testing
+coverage/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Misc
+.eslintcache
+*.tgz
