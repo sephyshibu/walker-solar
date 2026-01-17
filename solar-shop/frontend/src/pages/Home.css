@@ -46,6 +46,17 @@
   animation: fadeIn 0.8s ease;
 }
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .hero-badge {
   display: inline-block;
   padding: 0.5rem 1rem;
@@ -138,9 +149,273 @@
   color: var(--text-secondary);
 }
 
-/* Hero Image */
+/* ============================================
+   3D CAROUSEL STYLES
+   ============================================ */
+
+.hero-carousel {
+  position: relative;
+  width: 100%;
+  height: 500px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.8s ease 0.2s both;
+}
+
+@media (max-width: 1024px) {
+  .hero-carousel {
+    display: none;
+  }
+}
+
+/* The 3D scene container */
+.carousel-scene {
+  width: 100%;
+  height: 400px;
+  perspective: 1200px;
+  perspective-origin: center center;
+}
+
+/* Container that holds all slides */
+.carousel-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+}
+
+/* Individual slide */
+.carousel-slide {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 400px;
+  height: 280px;
+  transform-style: preserve-3d;
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Calculate position based on offset */
+  transform: 
+    translateX(-50%) 
+    translateY(-50%)
+    translateX(calc(var(--offset) * 120px))
+    translateZ(calc(var(--abs-offset) * -200px))
+    rotateY(calc(var(--offset) * -25deg))
+    scale(calc(1 - var(--abs-offset) * 0.15));
+  
+  /* Fade out non-active slides */
+  opacity: calc(1 - var(--abs-offset) * 0.4);
+  filter: blur(calc(var(--abs-offset) * 2px));
+  
+  /* Click events only on active slide */
+  pointer-events: none;
+  z-index: calc(10 - var(--abs-offset));
+}
+
+.carousel-slide.active {
+  pointer-events: auto;
+  filter: blur(0);
+}
+
+/* Slide content wrapper */
+.slide-content {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--border-radius-xl, 16px);
+  overflow: visible;
+  transform-style: preserve-3d;
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  
+  /* Subtle floating animation for active slide */
+  animation: slideFloat 6s ease-in-out infinite;
+}
+
+.carousel-slide:not(.active) .slide-content {
+  animation: none;
+}
+
+@keyframes slideFloat {
+  0%, 100% {
+    transform: translateY(0) rotateX(5deg);
+  }
+  50% {
+    transform: translateY(-15px) rotateX(2deg);
+  }
+}
+
+.slide-content img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: var(--border-radius-xl, 16px);
+  display: block;
+}
+
+/* Reflection effect */
+.slide-reflection {
+  position: absolute;
+  bottom: -100%;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transform: scaleY(-1);
+  opacity: 0.15;
+  mask-image: linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.5) 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.5) 100%);
+  pointer-events: none;
+  border-radius: var(--border-radius-xl, 16px);
+  overflow: hidden;
+}
+
+.slide-reflection img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: blur(2px);
+}
+
+/* Floating Cards on slides */
+.carousel-slide .floating-card {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: rgba(30, 41, 59, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--border-radius-lg, 12px);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #fff;
+  box-shadow: 
+    0 15px 35px rgba(0, 0, 0, 0.4),
+    0 0 20px rgba(245, 158, 11, 0.1);
+  
+  /* Pop out in 3D space */
+  transform: translateZ(80px);
+  transition: all 0.3s ease;
+  opacity: 0;
+}
+
+.carousel-slide.active .floating-card {
+  opacity: 1;
+}
+
+.carousel-slide .floating-card .card-icon {
+  color: var(--color-primary, #f59e0b);
+  font-size: 1.1rem;
+}
+
+/* Card positions */
+.carousel-slide .floating-card.card-1 {
+  top: 10%;
+  right: -20px;
+  animation: floatCard1 4s ease-in-out infinite;
+  animation-delay: 0.5s;
+}
+
+.carousel-slide .floating-card.card-2 {
+  bottom: 15%;
+  left: -20px;
+  animation: floatCard2 5s ease-in-out infinite;
+  animation-delay: 1s;
+}
+
+.carousel-slide:not(.active) .floating-card {
+  animation: none;
+}
+
+@keyframes floatCard1 {
+  0%, 100% { 
+    transform: translateZ(80px) translateY(0); 
+  }
+  50% { 
+    transform: translateZ(80px) translateY(-12px); 
+  }
+}
+
+@keyframes floatCard2 {
+  0%, 100% { 
+    transform: translateZ(100px) translateY(0); 
+  }
+  50% { 
+    transform: translateZ(100px) translateY(-12px); 
+  }
+}
+
+/* Carousel Controls */
+.carousel-controls {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.carousel-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  background: rgba(30, 41, 59, 0.8);
+  color: #fff;
+  font-size: 1.25rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.carousel-btn:hover {
+  background: var(--color-primary, #f59e0b);
+  border-color: var(--color-primary, #f59e0b);
+  color: #000;
+  transform: scale(1.1);
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+}
+
+.carousel-dots {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.carousel-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0;
+}
+
+.carousel-dot:hover {
+  border-color: var(--color-primary, #f59e0b);
+}
+
+.carousel-dot.active {
+  background: var(--color-primary, #f59e0b);
+  border-color: var(--color-primary, #f59e0b);
+  transform: scale(1.2);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+}
+
+/* ============================================
+   LEGACY HERO IMAGE STYLES (keeping for reference)
+   ============================================ */
+
 .hero-image {
   position: relative;
+  perspective: 1500px;
+  z-index: 1;
   animation: fadeIn 0.8s ease 0.2s both;
 }
 
@@ -153,8 +428,12 @@
 .hero-image-wrapper {
   position: relative;
   border-radius: var(--border-radius-xl);
-  overflow: hidden;
-  box-shadow: var(--shadow-xl);
+  transform-style: preserve-3d; 
+  transform: rotateY(-15deg) rotateX(10deg); 
+  animation: floatPanel 6s ease-in-out infinite; 
+  box-shadow: 
+    -20px 20px 60px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 
 .hero-image-wrapper img {
@@ -169,14 +448,15 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1rem;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
+  background: rgba(30, 41, 59, 0.9);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--border-radius-lg);
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--text-primary);
-  box-shadow: var(--shadow-lg);
-  animation: float 3s ease-in-out infinite;
+  color: #fff;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+  transform: translateZ(60px); 
 }
 
 .floating-card .card-icon {
@@ -184,19 +464,25 @@
 }
 
 .floating-card.card-1 {
-  top: 20%;
-  right: -20px;
+  top: 15%;
+  right: -30px;
+  animation: floatCard1 4s ease-in-out infinite;
 }
 
 .floating-card.card-2 {
   bottom: 20%;
-  left: -20px;
-  animation-delay: 1.5s;
+  left: -30px;
+  animation: floatCard2 5s ease-in-out infinite;
+  animation-delay: 1s;
 }
 
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+@keyframes floatPanel {
+  0%, 100% {
+    transform: rotateY(-15deg) rotateX(10deg) translateY(0);
+  }
+  50% {
+    transform: rotateY(-10deg) rotateX(5deg) translateY(-20px);
+  }
 }
 
 /* Categories Section */
