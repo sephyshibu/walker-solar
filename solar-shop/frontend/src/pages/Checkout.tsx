@@ -262,10 +262,10 @@ const Checkout: React.FC = () => {
                 <span>GST</span>
                 <span>{formatPrice(cart.totalGST)}</span>
               </div>
-              <div className="summary-row">
+              {/* <div className="summary-row">
                 <span>Shipping</span>
                 <span className="free-shipping">FREE</span>
-              </div>
+              </div> */}
               <div className="summary-row total">
                 <span>Grand Total</span>
                 <span>{formatPrice(cart.grandTotal)}</span>

@@ -4,6 +4,7 @@ export interface WishlistItem {
   productId: string;
   productName: string;
   productImage: string;
+  slug:string;
   price: number;
   addedAt: Date;
 }

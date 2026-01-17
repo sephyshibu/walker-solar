@@ -39,11 +39,13 @@ export class AddToWishlistUseCase {
     if (wishlist.hasItem(productId)) {
       throw new AppError('Product already in wishlist', 400);
     }
+    
 
     wishlist.addItem({
       productId: product.id,
       productName: product.name,
       productImage: product.primaryImage,
+      slug:product.slug,
       price: product.effectivePrice
     });
 

@@ -7,6 +7,7 @@ const WishlistItemSchema = new Schema<WishlistItem>({
   productId: { type: String, required: true },
   productName: { type: String, required: true },
   productImage: { type: String, required: true },
+  slug:{type:String, required:true},
   price: { type: Number, required: true, min: 0 },
   addedAt: { type: Date, default: Date.now }
 }, { _id: false });

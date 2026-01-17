@@ -37,6 +37,14 @@ export class RegisterUserUseCase {
     }
 
     const hashedPassword = await bcrypt.hash(data.password, 12);
+    if(!data.phone){
+      throw new Error(' the phone number is missng')
+    }
+    else{
+      if(data.phone.length!==10){
+        throw new Error('the invalid phone number , phone number length must be length equal to 10')
+      }
+    }
 
     const user = new User({
       email: data.email,

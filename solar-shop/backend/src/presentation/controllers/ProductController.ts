@@ -75,6 +75,7 @@ export class ProductController {
 
   static async getById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      console.log('the loger---> ', req.params.id)
       const useCase = new GetProductByIdUseCase(productRepository);
       const product = await useCase.execute(req.params.id, true);
 

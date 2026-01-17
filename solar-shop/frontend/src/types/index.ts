@@ -177,6 +177,7 @@ export type OrderStatus =
 
 export interface WishlistItem {
   productId: string;
+  slug:string;
   productName: string;
   productImage: string;
   price: number;
