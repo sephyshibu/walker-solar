@@ -236,6 +236,9 @@ export const orderApi = {
   getCourierServices: () => api.get('/admin/orders/couriers'),
   addTracking: (id: string, awbNumber: string, courierService: string) => 
     api.patch(`/admin/orders/${id}/tracking`, { awbNumber, courierService }),
+  uploadInvoice: (id: string, data: FormData) => 
+    api.post(`/admin/orders/${id}/invoice`, data, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  deleteInvoice: (id: string) => api.delete(`/admin/orders/${id}/invoice`),
 };
 
 // Wishlist

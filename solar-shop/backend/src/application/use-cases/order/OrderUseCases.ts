@@ -128,6 +128,37 @@ export class GetAllOrdersUseCase {
 export class UpdateOrderStatusUseCase {
   constructor(private orderRepository: IOrderRepository) {}
 
+  // Define the order status flow (index represents priority/order)
+  private static readonly STATUS_ORDER: OrderStatus[] = [
+    OrderStatus.PENDING,
+    OrderStatus.CONFIRMED,
+    OrderStatus.PROCESSING,
+    OrderStatus.SHIPPED,
+    OrderStatus.DELIVERED
+  ];
+
+  private getStatusIndex(status: OrderStatus): number {
+    return UpdateOrderStatusUseCase.STATUS_ORDER.indexOf(status);
+  }
+
+  private canTransitionTo(currentStatus: OrderStatus, newStatus: OrderStatus): boolean {
+    // Cancelled is a special case - can only go to cancelled, never come back
+    if (currentStatus === OrderStatus.CANCELLED) {
+      return false; // Cannot change from cancelled
+    }
+
+    // Can always cancel (except from cancelled itself, handled above)
+    if (newStatus === OrderStatus.CANCELLED) {
+      return true;
+    }
+
+    const currentIndex = this.getStatusIndex(currentStatus);
+    const newIndex = this.getStatusIndex(newStatus);
+
+    // Only allow forward transitions (new status must be higher than current)
+    return newIndex > currentIndex;
+  }
+
   async execute(orderId: string, status: OrderStatus): Promise<Order> {
     const order = await this.orderRepository.findById(orderId);
     if (!order) {
@@ -136,6 +167,16 @@ export class UpdateOrderStatusUseCase {
 
     if (order.isCancelled) {
       throw new AppError('Cannot update a cancelled order', 400);
+    }
+
+    // Validate status transition
+    if (!this.canTransitionTo(order.status, status)) {
+      const currentStatusName = order.status.charAt(0).toUpperCase() + order.status.slice(1);
+      const newStatusName = status.charAt(0).toUpperCase() + status.slice(1);
+      throw new AppError(
+        `Cannot change status from "${currentStatusName}" to "${newStatusName}". Only forward status changes are allowed.`,
+        400
+      );
     }
 
     const updatedOrder = await this.orderRepository.updateStatus(orderId, status);
@@ -261,6 +302,58 @@ export class GetCourierServicesUseCase {
       { value: CourierService.DHL, label: 'DHL', trackingUrlTemplate: COURIER_TRACKING_URLS[CourierService.DHL] },
       { value: CourierService.OTHER, label: 'Other', trackingUrlTemplate: '' }
     ];
+  }
+}
+
+export class UploadInvoiceUseCase {
+  constructor(private orderRepository: IOrderRepository) {}
+
+  async execute(orderId: string, invoiceUrl: string, publicId: string, originalName: string): Promise<Order> {
+    const order = await this.orderRepository.findById(orderId);
+    if (!order) {
+      throw new AppError('Order not found', 404);
+    }
+
+    const updatedOrder = await this.orderRepository.update(orderId, {
+      invoice: {
+        url: invoiceUrl,
+        publicId: publicId,
+        originalName: originalName,
+        uploadedAt: new Date()
+      }
+    });
+
+    if (!updatedOrder) {
+      throw new AppError('Failed to upload invoice', 500);
+    }
+
+    return updatedOrder;
+  }
+}
+
+export class DeleteInvoiceUseCase {
+  constructor(private orderRepository: IOrderRepository) {}
+
+  async execute(orderId: string): Promise<{ order: Order; publicId: string }> {
+    const order = await this.orderRepository.findById(orderId);
+    if (!order) {
+      throw new AppError('Order not found', 404);
+    }
+
+    if (!order.invoice) {
+      throw new AppError('No invoice found for this order', 404);
+    }
+
+    const publicId = order.invoice.publicId;
+
+    // Use removeInvoice method which uses $unset to properly remove the field
+    const updatedOrder = await this.orderRepository.removeInvoice(orderId);
+
+    if (!updatedOrder) {
+      throw new AppError('Failed to delete invoice', 500);
+    }
+
+    return { order: updatedOrder, publicId };
   }
 }
 

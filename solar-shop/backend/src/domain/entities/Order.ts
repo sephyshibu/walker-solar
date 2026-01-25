@@ -57,6 +57,13 @@ export interface TrackingInfo {
   shippedAt?: Date;
 }
 
+export interface InvoiceInfo {
+  url: string;
+  publicId: string;
+  originalName: string;
+  uploadedAt: Date;
+}
+
 export interface OrderProps {
   id?: string;
   orderNumber?: string;
@@ -71,6 +78,7 @@ export interface OrderProps {
   notes?: string;
   whatsappSent: boolean;
   tracking?: TrackingInfo;
+  invoice?: InvoiceInfo;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -153,6 +161,10 @@ export class Order {
 
   get tracking(): TrackingInfo | undefined {
     return this.props.tracking;
+  }
+
+  get invoice(): InvoiceInfo | undefined {
+    return this.props.invoice;
   }
 
   get createdAt(): Date {

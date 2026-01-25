@@ -135,7 +135,7 @@ const Products: React.FC = () => {
             </h1>
             <p>{pagination.total} products found</p>
           </div>
-          
+{/*           
           <div className="header-actions">
             <button 
               className="btn btn-secondary filter-toggle"
@@ -161,7 +161,7 @@ const Products: React.FC = () => {
               <option value="name-asc">Name: A to Z</option>
               <option value="viewCount-desc">Most Popular</option>
             </select>
-          </div>
+          </div> */}
         </div>
 
         <div className="products-layout">

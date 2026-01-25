@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FiPackage, FiTruck, FiExternalLink } from 'react-icons/fi';
+import { FiPackage, FiTruck, FiExternalLink, FiFileText, FiDownload } from 'react-icons/fi';
 import { Order } from '../types';
 import { orderApi } from '../services/api';
 import './Orders.css';
@@ -42,6 +42,25 @@ const Orders: React.FC = () => {
       cancelled: 'error',
     };
     return colors[status] || 'secondary';
+  };
+
+  const downloadInvoice = async (url: string, filename: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Failed to download invoice:', error);
+      // Fallback: open in new tab
+      window.open(url, '_blank');
+    }
   };
 
   const getCourierLabel = (service: string) => {
@@ -116,6 +135,24 @@ const Orders: React.FC = () => {
                       <FiExternalLink />
                       Track Order
                     </a>
+                  </div>
+                )}
+
+                {/* Invoice Download */}
+                {order.invoice && (
+                  <div className="order-invoice">
+                    <FiFileText className="invoice-icon" />
+                    <span className="invoice-label">Invoice Available</span>
+                    <button 
+                      onClick={() => downloadInvoice(
+                        order.invoice!.url, 
+                        order.invoice!.originalName || `invoice_${order.orderNumber}.pdf`
+                      )}
+                      className="btn btn-sm btn-download-invoice"
+                    >
+                      <FiDownload />
+                      Download Invoice
+                    </button>
                   </div>
                 )}
 

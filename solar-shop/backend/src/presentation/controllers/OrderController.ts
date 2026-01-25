@@ -10,7 +10,9 @@ import {
   MarkWhatsAppSentUseCase,
   GetOrderStatsUseCase,
   AddTrackingUseCase,
-  GetCourierServicesUseCase
+  GetCourierServicesUseCase,
+  UploadInvoiceUseCase,
+  DeleteInvoiceUseCase
 } from '../../application/use-cases/order/OrderUseCases';
 import { 
   MongoOrderRepository, 
@@ -19,11 +21,18 @@ import {
   MongoUserRepository 
 } from '../../infrastructure/database/repositories';
 import { OrderStatus, CourierService } from '../../domain/entities/Order';
+import { deleteFromCloudinary } from '../../infrastructure/config/cloudinary';
 
 const orderRepository = new MongoOrderRepository();
 const cartRepository = new MongoCartRepository();
 const productRepository = new MongoProductRepository();
 const userRepository = new MongoUserRepository();
+
+// Interface for Cloudinary uploaded file
+interface CloudinaryFile extends Express.Multer.File {
+  path: string; // Cloudinary URL
+  filename: string; // Cloudinary public ID
+}
 
 export class OrderController {
   static async create(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -195,6 +204,63 @@ export class OrderController {
       res.json({
         success: true,
         message: 'Tracking information added successfully',
+        data: order.toJSON()
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+ static async uploadInvoice(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    if (!req.file) {
+      res.status(400).json({
+        success: false,
+        message: 'No invoice file uploaded'
+      });
+      return;
+    }
+
+    const cloudinaryFile = req.file as CloudinaryFile;
+    
+    // Debug logging
+    console.log('Upload invoice - File object:', JSON.stringify(req.file, null, 2));
+    
+    const originalName = req.file.originalname || 'invoice.pdf';
+    // Cloudinary multer storage puts the URL in 'path' and public_id in 'filename'
+    const invoiceUrl = cloudinaryFile.path;
+    const publicId = cloudinaryFile.filename;
+    
+    console.log('Invoice URL:', invoiceUrl);
+    console.log('Public ID:', publicId);
+    console.log('Original Name:', originalName);
+    
+    const useCase = new UploadInvoiceUseCase(orderRepository);
+    const order = await useCase.execute(req.params.id, invoiceUrl, publicId, originalName);
+
+    res.json({
+      success: true,
+      message: 'Invoice uploaded successfully',
+      data: order.toJSON()
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+  static async deleteInvoice(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const useCase = new DeleteInvoiceUseCase(orderRepository);
+      const { order, publicId } = await useCase.execute(req.params.id);
+
+      // Delete from Cloudinary
+      // Check if it's a PDF (raw) or image
+      const isPdf = publicId.includes('.pdf') || order.invoice?.url.includes('.pdf');
+      await deleteFromCloudinary(publicId, isPdf ? 'raw' as any : 'image');
+
+      res.json({
+        success: true,
+        message: 'Invoice deleted successfully',
         data: order.toJSON()
       });
     } catch (error) {

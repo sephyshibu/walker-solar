@@ -21,6 +21,24 @@
   color: var(--text-secondary);
   font-size: 0.875rem;
 }
+.filter-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  background: var(--color-primary);
+  color: var(--bg-primary);
+  border-radius: 50%;
+  font-size: 0.7rem;
+  font-weight: bold;
+  margin-left: 0.5rem;
+}
+
+.pagination-ellipsis {
+  padding: 0.5rem;
+  color: var(--text-muted);
+}
 
 .header-actions {
   display: flex;

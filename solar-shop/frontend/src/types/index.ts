@@ -143,6 +143,13 @@ export interface TrackingInfo {
   shippedAt?: string;
 }
 
+export interface InvoiceInfo {
+  url: string;
+  publicId: string;
+  originalName: string;
+  uploadedAt: string;
+}
+
 export interface CourierService {
   value: string;
   label: string;
@@ -163,6 +170,7 @@ export interface Order {
   notes?: string;
   whatsappSent: boolean;
   tracking?: TrackingInfo;
+  invoice?: InvoiceInfo;
   createdAt: string;
   updatedAt: string;
 }
@@ -177,7 +185,6 @@ export type OrderStatus =
 
 export interface WishlistItem {
   productId: string;
-  slug:string;
   productName: string;
   productImage: string;
   price: number;

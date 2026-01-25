@@ -15,7 +15,125 @@
 .back-link:hover {
   color: var(--color-primary);
 }
+/* Validating State */
+.validating-cart {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+}
 
+.validating-cart .spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border-color);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Blocked Products Warning */
+.blocked-products-warning {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid var(--color-error);
+  border-radius: var(--border-radius-lg);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.blocked-products-warning .warning-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.blocked-products-warning .warning-header svg {
+  color: var(--color-error);
+  font-size: 1.5rem;
+}
+
+.blocked-products-warning .warning-header h3 {
+  color: var(--color-error);
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.blocked-products-warning > p {
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.blocked-products-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem 0;
+}
+
+.blocked-products-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: var(--bg-card);
+  border-radius: var(--border-radius);
+  margin-bottom: 0.5rem;
+}
+
+.blocked-products-list li span {
+  font-weight: 500;
+}
+
+/* Blocked item in summary */
+.summary-item.blocked {
+  opacity: 0.6;
+  position: relative;
+}
+
+.summary-item.blocked::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--color-error);
+}
+
+.unavailable-badge {
+  display: inline-block;
+  background: var(--color-error);
+  color: white;
+  font-size: 0.65rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: var(--border-radius-sm);
+  margin-left: 0.5rem;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.blocked-warning-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: var(--color-error);
+  font-size: 0.85rem;
+  margin-top: 0.75rem;
+}
+
+.place-order-btn:disabled {
+  background: var(--text-muted);
+  cursor: not-allowed;
+}
 .checkout-page h1 {
   font-size: 2rem;
   margin-bottom: 2rem;

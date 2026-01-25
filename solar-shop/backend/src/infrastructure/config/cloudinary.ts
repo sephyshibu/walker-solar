@@ -70,6 +70,20 @@ const profileImageStorage = new CloudinaryStorage({
   },
 });
 
+// Storage configuration for order invoices (PDF/images)
+const invoiceStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: async (req, file) => {
+    const isPdf = file.mimetype === 'application/pdf';
+    return {
+      folder: 'walkers/invoices',
+      resource_type: isPdf ? 'raw' : 'image',
+      allowed_formats: ['pdf', 'jpg', 'jpeg', 'png'],
+      public_id: `invoice_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+    };
+  },
+});
+
 // File filter for images
 const imageFileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
   const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
@@ -104,6 +118,17 @@ const mediaFileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFil
   }
 };
 
+// File filter for invoices (PDF and images)
+const invoiceFileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  const allowedMimeTypes = ['application/pdf', 'image/jpeg', 'image/png'];
+  
+  if (allowedMimeTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Invalid file type. Only PDF, JPEG, and PNG files are allowed for invoices.'));
+  }
+};
+
 // Multer upload configurations
 export const uploadProductImages = multer({
   storage: productImageStorage,
@@ -134,6 +159,14 @@ export const uploadProfileImage = multer({
   fileFilter: imageFileFilter,
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB max
+  },
+});
+
+export const uploadInvoice = multer({
+  storage: invoiceStorage,
+  fileFilter: invoiceFileFilter,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB max for invoices
   },
 });
 

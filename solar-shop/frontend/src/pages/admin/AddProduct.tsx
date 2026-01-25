@@ -71,15 +71,19 @@ const AddProduct: React.FC = () => {
     { minQuantity: 50, maxQuantity: null, price: 0 }
   ]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
-    if (type === 'checkbox') {
-      setFormData({ ...formData, [name]: (e.target as HTMLInputElement).checked });
-    } else {
-      setFormData({ ...formData, [name]: value });
-    }
-  };
-
+ const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const { name, value, type } = e.target;
+  if (type === 'checkbox') {
+    setFormData({ ...formData, [name]: (e.target as HTMLInputElement).checked });
+  } else {
+    setFormData({ ...formData, [name]: value });
+  }
+};
+// Add this new function after handleChange
+const handleStockChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const newStock = e.target.value;
+  setFormData({ ...formData, stock: newStock });
+};
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length + images.length > 10) {
@@ -159,62 +163,73 @@ const AddProduct: React.FC = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  
+  if (!formData.name || !formData.description || !formData.price || !formData.stock || !formData.sku) {
+    toast.error('Please fill in all required fields');
+    return;
+  }
+
+  // Validate discount price must be less than retail price
+  if (formData.discountPrice) {
+    const retailPrice = parseFloat(formData.price);
+    const discountPrice = parseFloat(formData.discountPrice);
     
-    if (!formData.name || !formData.description || !formData.price || !formData.stock || !formData.sku) {
-      toast.error('Please fill in all required fields');
+    if (discountPrice >= retailPrice) {
+      toast.error('Discount price must be less than retail price');
       return;
     }
+  }
 
-    setLoading(true);
+  setLoading(true);
 
-    try {
-      const submitData = new FormData();
-      
-      // Add basic fields
-      submitData.append('name', formData.name);
-      submitData.append('description', formData.description);
-      submitData.append('shortDescription', formData.shortDescription);
-      submitData.append('category', formData.category);
-      submitData.append('price', formData.price);
-      if (formData.discountPrice) submitData.append('discountPrice', formData.discountPrice);
-      submitData.append('gstRate', formData.gstRate);
-      submitData.append('stock', formData.stock);
-      submitData.append('sku', formData.sku.toUpperCase());
-      if (formData.brand) submitData.append('brand', formData.brand);
-      if (formData.warranty) submitData.append('warranty', formData.warranty);
-      submitData.append('isFeatured', String(formData.isFeatured));
+  try {
+    const submitData = new FormData();
+    
+    // Add basic fields
+    submitData.append('name', formData.name);
+    submitData.append('description', formData.description);
+    submitData.append('shortDescription', formData.shortDescription);
+    submitData.append('category', formData.category);
+    submitData.append('price', formData.price);
+    if (formData.discountPrice) submitData.append('discountPrice', formData.discountPrice);
+    submitData.append('gstRate', formData.gstRate);
+    submitData.append('stock', formData.stock);
+    submitData.append('sku', formData.sku.toUpperCase());
+    if (formData.brand) submitData.append('brand', formData.brand);
+    if (formData.warranty) submitData.append('warranty', formData.warranty);
+    submitData.append('isFeatured', String(formData.isFeatured));
 
-      // Add specifications (filter empty ones)
-      const validSpecs = specifications.filter(s => s.key && s.value);
-      submitData.append('specifications', JSON.stringify(validSpecs));
+    // Add specifications (filter empty ones)
+    const validSpecs = specifications.filter(s => s.key && s.value);
+    submitData.append('specifications', JSON.stringify(validSpecs));
 
-      // Add features (filter empty ones)
-      const validFeatures = features.filter(f => f.trim());
-      submitData.append('features', JSON.stringify(validFeatures));
+    // Add features (filter empty ones)
+    const validFeatures = features.filter(f => f.trim());
+    submitData.append('features', JSON.stringify(validFeatures));
 
-      // Add price tiers if enabled
-      if (enableTieredPricing) {
-        const validTiers = priceTiers.filter(t => t.minQuantity > 0 && t.price > 0);
-        submitData.append('priceTiers', JSON.stringify(validTiers));
-      }
-
-      // Add images
-      images.forEach(image => {
-        submitData.append('images', image);
-      });
-
-      await productApi.create(submitData);
-      
-      toast.success('Product created successfully!');
-      navigate('/admin/products');
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to create product');
-    } finally {
-      setLoading(false);
+    // Add price tiers if enabled
+    if (enableTieredPricing) {
+      const validTiers = priceTiers.filter(t => t.minQuantity > 0 && t.price > 0);
+      submitData.append('priceTiers', JSON.stringify(validTiers));
     }
-  };
+
+    // Add images
+    images.forEach(image => {
+      submitData.append('images', image);
+    });
+
+    await productApi.create(submitData);
+    
+    toast.success('Product created successfully!');
+    navigate('/admin/products');
+  } catch (error: any) {
+    toast.error(error.response?.data?.message || 'Failed to create product');
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="admin-page">
@@ -318,19 +333,22 @@ const AddProduct: React.FC = () => {
                   required
                 />
               </div>
-              <div className="form-group">
-                <label className="form-label">Retail Price (₹)</label>
-                <input
-                  type="number"
-                  name="discountPrice"
-                  className="form-input"
-                  value={formData.discountPrice}
-                  onChange={handleChange}
-                  placeholder="Leave empty if no discount"
-                  min="0"
-                  step="0.01"
-                />
-              </div>
+             <div className="form-group">
+              <label className="form-label">Retail Price</label>
+              <input
+                type="number"
+                name="discountPrice"
+                className="form-input"
+                value={formData.discountPrice}
+                onChange={handleChange}
+                placeholder="Sale price (must be less than retail)"
+                min="0"
+                step="0.01"
+              />
+              {formData.discountPrice && formData.price && parseFloat(formData.discountPrice) >= parseFloat(formData.price) && (
+                <small className="error-text">Discount price must be less than retail price</small>
+              )}
+            </div>
               <div className="form-group">
                 <label className="form-label">GST Rate *</label>
                 <select

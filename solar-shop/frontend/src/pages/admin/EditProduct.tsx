@@ -145,13 +145,24 @@ const EditProduct: React.FC = () => {
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
-    if (type === 'checkbox') {
-      setFormData({ ...formData, [name]: (e.target as HTMLInputElement).checked });
-    } else {
-      setFormData({ ...formData, [name]: value });
-    }
-  };
+  const { name, value, type } = e.target;
+  if (type === 'checkbox') {
+    setFormData({ ...formData, [name]: (e.target as HTMLInputElement).checked });
+  } else {
+    setFormData({ ...formData, [name]: value });
+  }
+};
+
+// Add this new function to handle stock changes with auto status update
+const handleStockChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const newStock = parseInt(e.target.value) || 0;
+  setFormData({ ...formData, stock: e.target.value });
+  
+  // Auto-convert out_of_stock to active when stock > 0
+  if (product && product.status === 'out_of_stock' && newStock > 0) {
+    toast.success('Stock added! Product will be set to active.');
+  }
+};
 
   const handleNewImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -242,19 +253,23 @@ const EditProduct: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.description || !formData.price || !formData.stock || !formData.sku) {
-      toast.error('Please fill in all required fields');
+     if (!formData.name || !formData.description || !formData.price || !formData.stock || !formData.sku) {
+    toast.error('Please fill in all required fields');
+    return;
+  }
+
+  // Validate discount price must be less than retail price
+  if (formData.discountPrice) {
+    const retailPrice = parseFloat(formData.price);
+    const discountPrice = parseFloat(formData.discountPrice);
+    
+    if (discountPrice >= retailPrice) {
+      toast.error('Discount price must be less than retail price');
       return;
     }
+  }
 
-    const remainingImages = existingImages.length - imagesToDelete.length + newImages.length;
-    if (remainingImages === 0) {
-      toast.error('Please add at least one image');
-      return;
-    }
-
-    setLoading(true);
-
+  setLoading(true);
     try {
       const submitData = new FormData();
       
@@ -264,14 +279,22 @@ const EditProduct: React.FC = () => {
       submitData.append('shortDescription', formData.shortDescription);
       submitData.append('category', formData.category);
       submitData.append('price', formData.price);
-      if (formData.discountPrice) submitData.append('discountPrice', formData.discountPrice);
+      if (formData.discountPrice) {
+      submitData.append('discountPrice', formData.discountPrice);
+    } else {
+      submitData.append('discountPrice', ''); // Clear discount price if empty
+    }
       submitData.append('gstRate', formData.gstRate);
       submitData.append('stock', formData.stock);
       submitData.append('sku', formData.sku.toUpperCase());
       if (formData.brand) submitData.append('brand', formData.brand);
       if (formData.warranty) submitData.append('warranty', formData.warranty);
       submitData.append('isFeatured', String(formData.isFeatured));
-
+      
+      const newStock = parseInt(formData.stock) || 0;
+    if (product && product.status === 'out_of_stock' && newStock > 0) {
+      submitData.append('status', 'active');
+    }
       // Add specifications (filter empty ones)
       const validSpecs = specifications.filter(s => s.key && s.value);
       submitData.append('specifications', JSON.stringify(validSpecs));
@@ -442,7 +465,7 @@ const EditProduct: React.FC = () => {
                 />
               </div>
               <div className="form-group">
-                <label className="form-label">Discount Price (₹)</label>
+                <label className="form-label">Retail Price (₹)</label>
                 <input
                   type="number"
                   name="discountPrice"
@@ -453,6 +476,9 @@ const EditProduct: React.FC = () => {
                   min="0"
                   step="0.01"
                 />
+                {formData.discountPrice && formData.price && parseFloat(formData.discountPrice) >= parseFloat(formData.price) && (
+    <small className="error-text">Discount price must be less than retail price</small>
+  )}
               </div>
               <div className="form-group">
                 <label className="form-label">GST Rate *</label>
@@ -475,16 +501,19 @@ const EditProduct: React.FC = () => {
             <div className="form-row">
               <div className="form-group">
                 <label className="form-label">Stock Quantity *</label>
-                <input
-                  type="number"
-                  name="stock"
-                  className="form-input"
-                  value={formData.stock}
-                  onChange={handleChange}
-                  placeholder="0"
-                  min="0"
-                  required
-                />
+                 <input
+                type="number"
+                name="stock"
+                className="form-input"
+                value={formData.stock}
+                onChange={handleStockChange}
+                placeholder="Available quantity"
+                min="0"
+                required
+              />
+              {product && product.status === 'out_of_stock' && parseInt(formData.stock) > 0 && (
+                <small className="success-text">✓ Product will be set to active after save</small>
+              )}
               </div>
             </div>
 

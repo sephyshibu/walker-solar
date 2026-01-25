@@ -29,13 +29,22 @@ const ProductDetail: React.FC = () => {
   const loadProduct = async () => {
     setLoading(true);
     try {
-      const response = await productApi.getBySlug(slug!);
-      setProduct(response.data.data);
-    } catch (error) {
-      console.error('Failed to load product:', error);
-    } finally {
-      setLoading(false);
+       const isObjectId = /^[a-f\d]{24}$/i.test(slug!);
+    
+    let response;
+    if (isObjectId) {
+      // If it's an ID, use getById
+      response = await productApi.getById(slug!);
+    } else {
+      // Otherwise use getBySlug
+      response = await productApi.getBySlug(slug!);
     }
+    setProduct(response.data.data);
+  } catch (error) {
+    console.error('Failed to load product:', error);
+  } finally {
+    setLoading(false);
+  }
   };
 
   const formatPrice = (price: number) => {

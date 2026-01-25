@@ -73,6 +73,7 @@ export interface ICartRepository {
 }
 
 // Order Repository Interface
+// Order Repository Interface
 export interface IOrderRepository {
   create(order: Order): Promise<Order>;
   findById(id: string): Promise<Order | null>;
@@ -83,6 +84,7 @@ export interface IOrderRepository {
     filters?: { status?: OrderStatus; userId?: string; startDate?: Date; endDate?: Date }
   ): Promise<PaginatedResult<Order>>;
   update(id: string, data: Partial<Order>): Promise<Order | null>;
+  removeInvoice(id: string): Promise<Order | null>;  // ADD THIS LINE
   updateStatus(id: string, status: OrderStatus): Promise<Order | null>;
   count(filters?: { status?: OrderStatus; userId?: string }): Promise<number>;
 }

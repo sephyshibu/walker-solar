@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import { OrderProps, OrderStatus, ShippingAddress, CourierService, TrackingInfo } from '../../../domain/entities/Order';
+import { OrderProps, OrderStatus, ShippingAddress, CourierService, TrackingInfo, InvoiceInfo } from '../../../domain/entities/Order';
 import { CartItem } from '../../../domain/entities/Cart';
 
 export interface OrderDocument extends Omit<OrderProps, 'id'>, Document {}
@@ -32,6 +32,13 @@ const TrackingInfoSchema = new Schema<TrackingInfo>({
   },
   trackingUrl: { type: String, required: true },
   shippedAt: { type: Date }
+}, { _id: false });
+
+const InvoiceInfoSchema = new Schema<InvoiceInfo>({
+  url: { type: String, required: true },
+  publicId: { type: String, required: true },
+  originalName: { type: String, required: true },
+  uploadedAt: { type: Date, default: Date.now }
 }, { _id: false });
 
 const OrderSchema = new Schema<OrderDocument>({
@@ -70,7 +77,8 @@ const OrderSchema = new Schema<OrderDocument>({
     type: Boolean, 
     default: false 
   },
-  tracking: { type: TrackingInfoSchema }
+  tracking: { type: TrackingInfoSchema },
+  invoice: { type: InvoiceInfoSchema }
 }, { 
   timestamps: true,
   toJSON: {

@@ -23,6 +23,12 @@ export class MongoOrderRepository implements IOrderRepository {
         trackingUrl: doc.tracking.trackingUrl,
         shippedAt: doc.tracking.shippedAt
       } : undefined,
+      invoice: doc.invoice ? {
+  url: doc.invoice.url,
+  publicId: doc.invoice.publicId,
+  originalName: doc.invoice.originalName,
+  uploadedAt: doc.invoice.uploadedAt
+} : undefined,
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt
     });
@@ -104,6 +110,19 @@ export class MongoOrderRepository implements IOrderRepository {
     );
     return doc ? this.documentToEntity(doc) : null;
   }
+
+
+// ADD THIS NEW METHOD
+async removeInvoice(id: string): Promise<Order | null> {
+  const doc = await OrderModel.findByIdAndUpdate(
+    id,
+    { $unset: { invoice: 1 } },
+    { new: true }
+  );
+  return doc ? this.documentToEntity(doc) : null;
+}
+
+
 
   async updateStatus(id: string, status: OrderStatus): Promise<Order | null> {
     const doc = await OrderModel.findByIdAndUpdate(

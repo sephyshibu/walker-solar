@@ -67,11 +67,11 @@ const Wishlist: React.FC = () => {
         <div className="wishlist-grid">
           {wishlist.items.map((item) => (
             <div key={item.productId} className="wishlist-item">
-              <Link to={`/products/${item.slug}`} className="item-image">
+             <Link to={`/products/${item.productId}`} className="item-image">
                 <img src={getImageUrl(item.productImage)} alt={item.productName} />
               </Link>
               <div className="item-info">
-                <Link to={`/products/${item.slug}`}>
+                <Link to={`/products/${item.productId}`}>
                   <h3>{item.productName}</h3>
                 </Link>
                 <p className="item-price">{formatPrice(item.price)}</p>

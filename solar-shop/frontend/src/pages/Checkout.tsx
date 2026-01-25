@@ -1,21 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { FiArrowLeft, FiCheck } from 'react-icons/fi';
+import { FiArrowLeft, FiCheck ,FiAlertTriangle } from 'react-icons/fi';
 import { FaWhatsapp } from 'react-icons/fa';
 import { useCartStore, useAuthStore } from '../store';
-import { orderApi } from '../services/api';
+import { orderApi,productApi } from '../services/api';
 import { ShippingAddress } from '../types';
 import toast from 'react-hot-toast';
 import './Checkout.css';
 
+interface BlockedProduct {
+  productId: string;
+  productName: string;
+}
+
 const Checkout: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { cart, clearCart } = useCartStore();
+  const { cart, clearCart ,removeFromCart  } = useCartStore();
   const [loading, setLoading] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
   const [whatsappUrl, setWhatsappUrl] = useState('');
   const [orderNumber, setOrderNumber] = useState('');
+  const [blockedProducts, setBlockedProducts] = useState<BlockedProduct[]>([]);
+  const [validating, setValidating] = useState(true);
 
   const [formData, setFormData] = useState<ShippingAddress>({
     fullName: user ? `${user.firstName} ${user.lastName}` : '',
@@ -29,6 +36,68 @@ const Checkout: React.FC = () => {
   const [notes, setNotes] = useState('');
 
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+   useEffect(() => {
+    if (cart && cart.items.length > 0) {
+      validateCartItems();
+    } else {
+      setValidating(false);
+    }
+  }, [cart]);
+
+    const validateCartItems = async () => {
+    setValidating(true);
+    const blocked: BlockedProduct[] = [];
+
+    try {
+      // Check each product in cart
+      for (const item of cart!.items) {
+        try {
+          const response = await productApi.getById(item.productId);
+          const product = response.data.data;
+          
+          // Check if product is blocked or out of stock
+          if (product.status === 'blocked' || product.status === 'out_of_stock') {
+            blocked.push({
+              productId: item.productId,
+              productName: item.productName,
+            });
+          }
+        } catch (error: any) {
+          // Product might be deleted
+          if (error.response?.status === 404) {
+            blocked.push({
+              productId: item.productId,
+              productName: item.productName,
+            });
+          }
+        }
+      }
+
+      setBlockedProducts(blocked);
+      
+      if (blocked.length > 0) {
+        toast.error(`${blocked.length} product(s) in your cart are unavailable`);
+      }
+    } catch (error) {
+      console.error('Error validating cart:', error);
+    } finally {
+      setValidating(false);
+    }
+  };
+   const handleRemoveBlockedProduct = async (productId: string) => {
+    await removeFromCart (productId);
+    setBlockedProducts(blockedProducts.filter(p => p.productId !== productId));
+    toast.success('Item removed from cart');
+  };
+
+  const handleRemoveAllBlocked = async () => {
+    for (const product of blockedProducts) {
+      await removeFromCart (product.productId);
+    }
+    setBlockedProducts([]);
+    toast.success('All unavailable items removed');
+  };
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -45,6 +114,7 @@ const Checkout: React.FC = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+    
     if (name === 'notes') {
       setNotes(value);
     } else {
@@ -54,6 +124,14 @@ const Checkout: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
+
+      // Check for blocked products before submitting
+    if (blockedProducts.length > 0) {
+      toast.error('Please remove unavailable products from your cart before checkout');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -66,6 +144,7 @@ const Checkout: React.FC = () => {
       setOrderNumber(order.orderNumber);
       setWhatsappUrl(whatsappUrl);
       setOrderComplete(true);
+   
       toast.success('Order placed successfully!');
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to place order');
@@ -76,7 +155,20 @@ const Checkout: React.FC = () => {
 
   const handleWhatsAppClick = async () => {
     window.open(whatsappUrl, '_blank');
+       await clearCart()
   };
+   if (validating) {
+    return (
+      <div className="checkout-page">
+        <div className="container">
+          <div className="validating-cart">
+            <div className="spinner"></div>
+            <p>Validating cart items...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!cart || cart.items.length === 0) {
     return (
@@ -131,6 +223,38 @@ const Checkout: React.FC = () => {
         </Link>
 
         <h1>Checkout</h1>
+
+              {/* Blocked Products Warning */}
+        {blockedProducts.length > 0 && (
+          <div className="blocked-products-warning">
+            <div className="warning-header">
+              <FiAlertTriangle />
+              <h3>Some products are unavailable</h3>
+            </div>
+            <p>The following products are not available at the moment. Please remove them and proceed to checkout.</p>
+            <ul className="blocked-products-list">
+              {blockedProducts.map((product) => (
+                <li key={product.productId}>
+                  <span>{product.productName}</span>
+                  <button 
+                    className="btn btn-sm btn-danger"
+                    onClick={() => handleRemoveBlockedProduct(product.productId)}
+                  >
+                    Remove
+                  </button>
+                </li>
+              ))}
+            </ul>
+            {blockedProducts.length > 1 && (
+              <button 
+                className="btn btn-secondary btn-sm"
+                onClick={handleRemoveAllBlocked}
+              >
+                Remove All Unavailable Items
+              </button>
+            )}
+          </div>
+        )}
 
         <div className="checkout-layout">
           <form onSubmit={handleSubmit} className="checkout-form">

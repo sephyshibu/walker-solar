@@ -13,7 +13,8 @@ import {
   uploadProductImages, 
   uploadProductVideo, 
   uploadGalleryImage, 
-  uploadProfileImage 
+  uploadProfileImage,
+  uploadInvoice
 } from '../../infrastructure/config/cloudinary';
 import { UserRole } from '../../domain/entities/User';
 
@@ -75,6 +76,8 @@ router.get('/admin/orders/couriers', authenticate, authorize(UserRole.ADMIN), Or
 router.get('/admin/orders/number/:orderNumber', authenticate, authorize(UserRole.ADMIN), OrderController.getByNumber);
 router.patch('/admin/orders/:id/status', authenticate, authorize(UserRole.ADMIN), OrderController.updateStatus);
 router.patch('/admin/orders/:id/tracking', authenticate, authorize(UserRole.ADMIN), OrderController.addTracking);
+router.post('/admin/orders/:id/invoice', authenticate, authorize(UserRole.ADMIN), uploadInvoice.single('invoice'), OrderController.uploadInvoice);
+router.delete('/admin/orders/:id/invoice', authenticate, authorize(UserRole.ADMIN), OrderController.deleteInvoice);
 
 // ==================== WISHLIST ROUTES ====================
 router.get('/wishlist', authenticate, WishlistController.getWishlist);
