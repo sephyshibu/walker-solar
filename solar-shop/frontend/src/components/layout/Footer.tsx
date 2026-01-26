@@ -1,10 +1,32 @@
-import React from 'react';
+import React ,{useState,useEffect}from 'react';
 import { Link } from 'react-router-dom';
 import { FiMail, FiPhone, FiMapPin, FiFacebook, FiTwitter, FiInstagram, FiYoutube } from 'react-icons/fi';
 import './Footer.css';
+import { categoryApi } from '../../services/api';
 
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+}
 const Footer: React.FC = () => {
+  const [categories, setCategories] = useState<Category[]>([]);
+    
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const response = await categoryApi.getActive();
+        setCategories(response.data.data);
+      } catch (error) {
+        console.error('Failed to load categories:', error);
+      }
+    };
+    loadCategories();
+  }, []);
+  
   const currentYear = new Date().getFullYear();
+
 
   return (
     <footer className="footer">
@@ -40,16 +62,16 @@ const Footer: React.FC = () => {
             </div>
 
             {/* Categories */}
-            <div className="footer-section">
-              <h4>Categories</h4>
-              <ul>
-                <li><Link to="/products?category=solar_panels">Solar Panels</Link></li>
-                <li><Link to="/products?category=inverters">Inverters</Link></li>
-                <li><Link to="/products?category=batteries">Batteries</Link></li>
-                <li><Link to="/products?category=charge_controllers">Charge Controllers</Link></li>
-                <li><Link to="/products?category=accessories">Accessories</Link></li>
-              </ul>
-            </div>
+           <div className="footer-section">
+            <h4>Categories</h4>
+            <ul>
+              {categories.map((cat) => (
+                <li key={cat.slug}>
+                  <Link to={`/products?category=${cat.slug}`}>{cat.name}</Link>
+                </li>
+              ))}
+            </ul>
+          </div>
 
             {/* Contact */}
             <div className="footer-section">

@@ -83,6 +83,20 @@ const invoiceStorage = new CloudinaryStorage({
     };
   },
 });
+// Storage configuration for category images
+const categoryImageStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: async (req, file) => {
+    return {
+      folder: 'walkers/categories',
+      allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+      transformation: [
+        { width: 500, height: 500, crop: 'limit', quality: 'auto' }
+      ],
+      public_id: `category_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+    };
+  },
+});
 
 // File filter for images
 const imageFileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
@@ -167,6 +181,13 @@ export const uploadInvoice = multer({
   fileFilter: invoiceFileFilter,
   limits: {
     fileSize: 10 * 1024 * 1024, // 10MB max for invoices
+  },
+});
+export const uploadCategoryImage = multer({
+  storage: categoryImageStorage,
+  fileFilter: imageFileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB max for category images
   },
 });
 

@@ -10,8 +10,15 @@ import {
 } from '../../application/use-cases/gallery/GalleryUseCases';
 import { MongoGalleryRepository } from '../../infrastructure/database/repositories';
 import { GalleryCategory } from '../../domain/entities/Gallery';
+import { deleteFromCloudinary } from '../../infrastructure/config/cloudinary';
 
 const galleryRepository = new MongoGalleryRepository();
+
+// Extended multer file type for Cloudinary storage
+interface CloudinaryFile extends Express.Multer.File {
+  path: string;      // Cloudinary URL
+  filename: string;  // Cloudinary public_id
+}
 
 export class GalleryController {
   static async create(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -19,13 +26,19 @@ export class GalleryController {
       const useCase = new CreateGalleryItemUseCase(galleryRepository);
       
       let imageUrl = req.body.imageUrl;
+      let imagePublicId: string | undefined;
+      
+      // Handle Cloudinary upload
       if (req.file) {
-        imageUrl = `/uploads/gallery/${req.file.filename}`;
+        const cloudinaryFile = req.file as CloudinaryFile;
+        imageUrl = cloudinaryFile.path;
+        imagePublicId = cloudinaryFile.filename;
       }
 
       const item = await useCase.execute({
         ...req.body,
         imageUrl,
+        imagePublicId,
         tags: req.body.tags ? JSON.parse(req.body.tags) : [],
         sortOrder: req.body.sortOrder ? parseInt(req.body.sortOrder) : 0
       });
@@ -105,12 +118,25 @@ export class GalleryController {
 
   static async update(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      // Get existing item to potentially delete old image
+      const getUseCase = new GetGalleryItemByIdUseCase(galleryRepository);
+      const existingItem = await getUseCase.execute(req.params.id);
+      
       const useCase = new UpdateGalleryItemUseCase(galleryRepository);
       
       const updateData: any = { ...req.body };
       
+      // Handle Cloudinary upload
       if (req.file) {
-        updateData.imageUrl = `/uploads/gallery/${req.file.filename}`;
+        const cloudinaryFile = req.file as CloudinaryFile;
+        
+        // Delete old image if exists
+        if ((existingItem as any).imagePublicId) {
+          await deleteFromCloudinary((existingItem as any).imagePublicId);
+        }
+        
+        updateData.imageUrl = cloudinaryFile.path;
+        updateData.imagePublicId = cloudinaryFile.filename;
       }
       if (req.body.tags) {
         updateData.tags = JSON.parse(req.body.tags);
@@ -133,12 +159,33 @@ export class GalleryController {
 
   static async delete(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      // Get item to delete image from Cloudinary
+      const getUseCase = new GetGalleryItemByIdUseCase(galleryRepository);
+      const item = await getUseCase.execute(req.params.id);
+      
       const useCase = new DeleteGalleryItemUseCase(galleryRepository);
       await useCase.execute(req.params.id);
+      
+      // Delete image from Cloudinary
+      if ((item as any).imagePublicId) {
+        await deleteFromCloudinary((item as any).imagePublicId);
+      }
 
       res.json({
         success: true,
         message: 'Gallery item deleted successfully'
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+static async getStats(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const stats = await galleryRepository.getStats();
+
+      res.json({
+        success: true,
+        data: stats
       });
     } catch (error) {
       next(error);

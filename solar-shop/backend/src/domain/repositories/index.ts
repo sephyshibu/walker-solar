@@ -5,7 +5,7 @@ import { Order, OrderStatus } from '../entities/Order';
 import { Wishlist } from '../entities/Wishlist';
 import { GalleryItem, GalleryCategory } from '../entities/Gallery';
 import { Contact, ContactStatus } from '../entities/Contact';
-
+import { Category, CategoryStatus } from '../entities/Category';
 export interface PaginationOptions {
   page: number;
   limit: number;
@@ -41,24 +41,25 @@ export interface IProductRepository {
   findById(id: string): Promise<Product | null>;
   findBySlug(slug: string): Promise<Product | null>;
   findBySku(sku: string): Promise<Product | null>;
-  findAll(
-    options: PaginationOptions, 
-    filters?: { 
-      category?: ProductCategory; 
-      status?: ProductStatus; 
-      isFeatured?: boolean;
-      minPrice?: number;
-      maxPrice?: number;
-      search?: string;
-    }
-  ): Promise<PaginatedResult<Product>>;
+ findAll(
+  options: PaginationOptions, 
+  filters?: { 
+    category?: string;  // Changed from ProductCategory
+    status?: ProductStatus; 
+    isFeatured?: boolean;
+    minPrice?: number;
+    maxPrice?: number;
+    search?: string;
+  }
+): Promise<PaginatedResult<Product>>;
+findByCategory(category: string, options: PaginationOptions): Promise<PaginatedResult<Product>>;
+
+count(filters?: { category?: string; status?: ProductStatus }): Promise<number>;
   update(id: string, data: Partial<Product>): Promise<Product | null>;
   delete(id: string): Promise<boolean>;
   updateStatus(id: string, status: ProductStatus): Promise<Product | null>;
   incrementViewCount(id: string): Promise<void>;
   findFeatured(limit?: number): Promise<Product[]>;
-  findByCategory(category: ProductCategory, options: PaginationOptions): Promise<PaginatedResult<Product>>;
-  count(filters?: { category?: ProductCategory; status?: ProductStatus }): Promise<number>;
   search(query: string, options: PaginationOptions): Promise<PaginatedResult<Product>>;
 }
 
@@ -88,7 +89,21 @@ export interface IOrderRepository {
   updateStatus(id: string, status: OrderStatus): Promise<Order | null>;
   count(filters?: { status?: OrderStatus; userId?: string }): Promise<number>;
 }
-
+export interface ICategoryRepository {
+  create(category: Category): Promise<Category>;
+  findById(id: string): Promise<Category | null>;
+  findBySlug(slug: string): Promise<Category | null>;
+  findByName(name: string): Promise<Category | null>;
+  findAll(
+    options: PaginationOptions,
+    filters?: { status?: CategoryStatus }
+  ): Promise<PaginatedResult<Category>>;
+  findAllActive(): Promise<Category[]>;
+  update(id: string, data: Partial<Category>): Promise<Category | null>;
+  delete(id: string): Promise<boolean>;
+  updateProductCount(id: string, count: number): Promise<Category | null>;
+  count(filters?: { status?: CategoryStatus }): Promise<number>;
+}
 // Wishlist Repository Interface
 export interface IWishlistRepository {
   create(wishlist: Wishlist): Promise<Wishlist>;

@@ -1,7 +1,9 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { GalleryItemProps, GalleryCategory } from '../../../domain/entities/Gallery';
 
-export interface GalleryDocument extends Omit<GalleryItemProps, 'id'>, Document {}
+export interface GalleryDocument extends Omit<GalleryItemProps, 'id'>, Document {
+  imagePublicId?: string;
+}
 
 const GallerySchema = new Schema<GalleryDocument>({
   title: { 
@@ -14,6 +16,7 @@ const GallerySchema = new Schema<GalleryDocument>({
     type: String, 
     required: true 
   },
+  imagePublicId: { type: String },
   thumbnailUrl: { type: String },
   category: { 
     type: String, 

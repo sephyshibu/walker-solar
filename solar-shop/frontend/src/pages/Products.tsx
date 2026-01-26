@@ -4,33 +4,21 @@ import { FiFilter, FiX, FiChevronDown, FiGrid, FiList } from 'react-icons/fi';
 import ProductCard from '../components/product/ProductCard';
 import SEO from '../components/common/SEO';
 import { Product, ProductCategory, PaginatedResponse } from '../types';
-import { productApi } from '../services/api';
+import { productApi, categoryApi } from '../services/api';
 import './Products.css';
 
-const categoryLabels: Record<string, string> = {
-  solar_panels: 'Solar Panels',
-  inverters: 'Inverters',
-  batteries: 'Batteries',
-  charge_controllers: 'Charge Controllers',
-  mounting_systems: 'Mounting Systems',
-  cables_connectors: 'Cables & Connectors',
-  accessories: 'Accessories',
-};
-
-const categoryDescriptions: Record<string, string> = {
-  solar_panels: 'High-efficiency monocrystalline and polycrystalline solar panels. Best prices with 25-year warranty.',
-  inverters: 'Hybrid, on-grid and off-grid solar inverters from top brands. Smart monitoring included.',
-  batteries: 'Lithium-ion and lead-acid solar batteries for reliable energy storage.',
-  charge_controllers: 'MPPT and PWM charge controllers for optimal solar charging.',
-  mounting_systems: 'Rooftop and ground mounting solutions for solar panels.',
-  cables_connectors: 'Solar cables, MC4 connectors and wiring accessories.',
-  accessories: 'Solar accessories, tools and maintenance equipment.',
-};
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+}
 
 const Products: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 12,
@@ -46,16 +34,34 @@ const Products: React.FC = () => {
   const minPrice = searchParams.get('minPrice') || '';
   const maxPrice = searchParams.get('maxPrice') || '';
 
+  // Get category label and description from dynamic categories
+  const currentCategory = categories.find(c => c.slug === category);
+  const categoryLabel = currentCategory?.name || category;
+  const categoryDescription = currentCategory?.description || '';
+
   // SEO title and description
   const seoTitle = category 
-    ? `${categoryLabels[category]} - Buy Online at Best Prices | WALKERS`
+    ? `${categoryLabel} - Buy Online at Best Prices | WALKERS`
     : search 
     ? `Search Results for "${search}" | WALKERS`
     : 'Solar Products - Panels, Inverters, Batteries | WALKERS';
   
   const seoDescription = category
-    ? categoryDescriptions[category] || `Shop ${categoryLabels[category]} at WALKERS. Best prices with warranty.`
+    ? categoryDescription || `Shop ${categoryLabel} at WALKERS. Best prices with warranty.`
     : 'Browse our complete range of solar products. Solar panels, inverters, batteries, charge controllers and accessories at best prices.';
+
+  // Load categories on mount
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const response = await categoryApi.getActive();
+        setCategories(response.data.data);
+      } catch (error) {
+        console.error('Failed to load categories:', error);
+      }
+    };
+    loadCategories();
+  }, []);
 
   useEffect(() => {
     loadProducts();
@@ -121,7 +127,7 @@ const Products: React.FC = () => {
       <SEO 
         title={seoTitle}
         description={seoDescription}
-        keywords={`${category ? categoryLabels[category] + ', ' : ''}solar products, buy solar online, WALKERS`}
+        keywords={`${category ? categoryLabel + ', ' : ''}solar products, buy solar online, WALKERS`}
         url={`https://walkers.com/products${category ? '?category=' + category : ''}`}
       />
       
@@ -130,12 +136,12 @@ const Products: React.FC = () => {
         <div className="page-header">
           <div>
             <h1>
-              {category ? categoryLabels[category] || 'Products' : 
+              {category ? categoryLabel || 'Products' : 
                search ? `Search: "${search}"` : 'All Products'}
             </h1>
             <p>{pagination.total} products found</p>
           </div>
-{/*           
+          
           <div className="header-actions">
             <button 
               className="btn btn-secondary filter-toggle"
@@ -145,7 +151,7 @@ const Products: React.FC = () => {
               Filters
             </button>
             
-            <select 
+            {/* <select 
               value={`${sortBy}-${sortOrder}`}
               onChange={(e) => {
                 const [newSortBy, newSortOrder] = e.target.value.split('-');
@@ -160,8 +166,8 @@ const Products: React.FC = () => {
               <option value="price-desc">Price: High to Low</option>
               <option value="name-asc">Name: A to Z</option>
               <option value="viewCount-desc">Most Popular</option>
-            </select>
-          </div> */}
+            </select> */}
+          </div>
         </div>
 
         <div className="products-layout">
@@ -186,15 +192,15 @@ const Products: React.FC = () => {
                   />
                   <span>All Categories</span>
                 </label>
-                {Object.entries(categoryLabels).map(([key, label]) => (
-                  <label key={key} className="filter-option">
+                {categories.map((cat) => (
+                  <label key={cat.slug} className="filter-option">
                     <input
                       type="radio"
                       name="category"
-                      checked={category === key}
-                      onChange={() => handleFilterChange('category', key)}
+                      checked={category === cat.slug}
+                      onChange={() => handleFilterChange('category', cat.slug)}
                     />
-                    <span>{label}</span>
+                    <span>{cat.name}</span>
                   </label>
                 ))}
               </div>

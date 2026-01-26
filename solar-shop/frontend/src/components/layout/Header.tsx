@@ -2,8 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { FiShoppingCart, FiHeart, FiUser, FiMenu, FiX, FiSearch, FiLogOut, FiSettings } from 'react-icons/fi';
 import { useAuthStore, useCartStore, useWishlistStore, useUIStore } from '../../store';
+import { categoryApi } from '../../services/api';
 import './Header.css';
 
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+}
 const Header: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -11,6 +17,7 @@ const Header: React.FC = () => {
   const { cart } = useCartStore();
   const { wishlist } = useWishlistStore();
   const { toggleCart, toggleSidebar, sidebarOpen, closeSidebar } = useUIStore();
+  const [categories, setCategories] = useState<Category[]>([]);
   
   const [searchQuery, setSearchQuery] = useState('');
   const [scrolled, setScrolled] = useState(false);
@@ -29,6 +36,18 @@ const Header: React.FC = () => {
     setUserMenuOpen(false);
   }, [location.pathname]);
 
+  useEffect(() => {
+  const loadCategories = async () => {
+    try {
+      const response = await categoryApi.getActive();
+      setCategories(response.data.data);
+    } catch (error) {
+      console.error('Failed to load categories:', error);
+    }
+  };
+  loadCategories();
+}, []);
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -43,13 +62,7 @@ const Header: React.FC = () => {
     setUserMenuOpen(false);
   };
 
-  const categories = [
-    { name: 'Solar Panels', slug: 'solar_panels' },
-    { name: 'Inverters', slug: 'inverters' },
-    { name: 'Batteries', slug: 'batteries' },
-    { name: 'Controllers', slug: 'charge_controllers' },
-    { name: 'Accessories', slug: 'accessories' },
-  ];
+  
 
   return (
     <header className={`header ${scrolled ? 'scrolled' : ''}`}>
@@ -64,17 +77,18 @@ const Header: React.FC = () => {
         <nav className="nav-desktop">
           <Link to="/" className={location.pathname === '/' ? 'active' : ''}>Home</Link>
           <div className="nav-dropdown">
-            <Link to="/products" className={location.pathname.startsWith('/products') ? 'active' : ''}>
-              Products
-            </Link>
-            <div className="dropdown-menu">
-              {categories.map((cat) => (
-                <Link key={cat.slug} to={`/products?category=${cat.slug}`}>
-                  {cat.name}
-                </Link>
-              ))}
-            </div>
-          </div>
+  <Link to="/products" className={location.pathname.startsWith('/products') ? 'active' : ''}>
+    Products
+  </Link>
+  <div className="dropdown-menu">
+    <Link to="/products">All Products</Link>  {/* Added this */}
+    {categories.map((cat) => (
+      <Link key={cat.slug} to={`/products?category=${cat.slug}`}>
+        {cat.name}
+      </Link>
+    ))}
+  </div>
+</div>
           <Link to="/gallery" className={location.pathname === '/gallery' ? 'active' : ''}>Gallery</Link>
           <Link to="/contact" className={location.pathname === '/contact' ? 'active' : ''}>Contact</Link>
           {isAdmin && (
@@ -83,7 +97,7 @@ const Header: React.FC = () => {
         </nav>
 
         {/* Search Bar */}
-        <form className="search-form" onSubmit={handleSearch}>
+        {/* <form className="search-form" onSubmit={handleSearch}>
           <FiSearch className="search-icon" />
           <input
             type="text"
@@ -91,7 +105,7 @@ const Header: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
-        </form>
+        </form> */}
 
         {/* Actions */}
         <div className="header-actions">

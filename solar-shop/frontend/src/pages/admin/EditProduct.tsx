@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { FiSave, FiPlus, FiTrash2, FiUpload, FiArrowLeft, FiDollarSign, FiImage } from 'react-icons/fi';
-import { productApi } from '../../services/api';
+import { productApi, categoryApi } from '../../services/api';
 import { Product } from '../../types';
 import toast from 'react-hot-toast';
 import './Admin.css';
 import './AddProduct.css';
-
+interface CategoryOption {
+  id: string;
+  name: string;
+  slug: string;
+}
 const categories = [
   { value: 'solar_panels', label: 'Solar Panels' },
   { value: 'inverters', label: 'Inverters' },
@@ -43,7 +47,8 @@ const EditProduct: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [product, setProduct] = useState<Product | null>(null);
-  
+  const [categories, setCategories] = useState<CategoryOption[]>([]);
+const [categoriesLoading, setCategoriesLoading] = useState(true);
   // New images to upload
   const [newImages, setNewImages] = useState<File[]>([]);
   const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
@@ -89,6 +94,22 @@ const EditProduct: React.FC = () => {
       fetchProduct();
     }
   }, [id]);
+
+  // Fetch categories on mount
+useEffect(() => {
+  const loadCategories = async () => {
+    try {
+      const response = await categoryApi.getActive();
+      setCategories(response.data.data);
+    } catch (error) {
+      console.error('Failed to load categories:', error);
+      toast.error('Failed to load categories');
+    } finally {
+      setCategoriesLoading(false);
+    }
+  };
+  loadCategories();
+}, []);
 
   const fetchProduct = async () => {
     try {
@@ -394,16 +415,23 @@ const handleStockChange = (e: React.ChangeEvent<HTMLInputElement>) => {
               <div className="form-group">
                 <label className="form-label">Category *</label>
                 <select
-                  name="category"
-                  className="form-input"
-                  value={formData.category}
-                  onChange={handleChange}
-                  required
-                >
-                  {categories.map(cat => (
-                    <option key={cat.value} value={cat.value}>{cat.label}</option>
-                  ))}
-                </select>
+                name="category"
+                className="form-input"
+                value={formData.category}
+                onChange={handleChange}
+                required
+                disabled={categoriesLoading}
+              >
+                {categoriesLoading ? (
+                  <option value="">Loading categories...</option>
+                ) : categories.length === 0 ? (
+                  <option value="">No categories available</option>
+                ) : (
+                  categories.map(cat => (
+                    <option key={cat.slug} value={cat.slug}>{cat.name}</option>
+                  ))
+                )}
+              </select>
               </div>
               <div className="form-group">
                 <label className="form-label">SKU *</label>

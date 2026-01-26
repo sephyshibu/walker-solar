@@ -30,6 +30,8 @@ const AdminAddProduct = lazy(() => import('./pages/admin/AddProduct'));
 const AdminEditProduct = lazy(() => import('./pages/admin/EditProduct'));
 const AdminOrders = lazy(() => import('./pages/admin/Orders'));
 const AdminUsers = lazy(() => import('./pages/admin/Users'));
+const AdminCategories = lazy(() => import('./pages/admin/Categories'));
+const AdminGallery = lazy(() => import('./pages/admin/Gallery1'));
 
 // Loading component
 const Loading: React.FC = () => (
@@ -201,6 +203,16 @@ const App: React.FC = () => {
           <Route path="/admin/users" element={
             <ProtectedRoute adminOnly>
               <Layout><AdminUsers /></Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/categories" element={
+            <ProtectedRoute adminOnly>
+              <Layout><AdminCategories /></Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/gallery" element={
+            <ProtectedRoute adminOnly>
+              <Layout><AdminGallery /></Layout>
             </ProtectedRoute>
           } />
 

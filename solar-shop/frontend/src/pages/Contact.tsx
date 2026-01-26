@@ -1,17 +1,12 @@
 import React, { useState } from 'react';
-import { FiMail, FiPhone, FiMapPin, FiSend, FiCheck } from 'react-icons/fi';
+import { FiMail, FiPhone, FiMapPin } from 'react-icons/fi';
 import { FaWhatsapp } from 'react-icons/fa';
-import { contactApi } from '../services/api';
 import SEO from '../components/common/SEO';
 import toast from 'react-hot-toast';
 import './Contact.css';
 
 const Contact: React.FC = () => {
   const [loading, setLoading] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const [whatsappUrl, setWhatsappUrl] = useState('');
-  const [contactId, setContactId] = useState('');
-  const [whatsappSent, setWhatsappSent] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -20,90 +15,58 @@ const Contact: React.FC = () => {
     message: '',
   });
 
+  // WhatsApp number (replace with your actual number)
+  const WHATSAPP_NUMBER = '917356645787'; // Format: country code + number without +
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate required fields
+    if (!formData.name || !formData.email || !formData.subject || !formData.message) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
     setLoading(true);
 
-    try {
-      const response = await contactApi.create(formData);
-      setWhatsappUrl(response.data.data.whatsappUrl);
-      setContactId(response.data.data.contact.id);
-      setSubmitted(true);
-      toast.success('Message sent successfully!');
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to send message');
-    } finally {
-      setLoading(false);
-    }
-  };
+    // Build WhatsApp message
+    const whatsappMessage = `*New Contact Form Message*
+    
+*Name:* ${formData.name}
+*Email:* ${formData.email}
+*Phone:* ${formData.phone || 'Not provided'}
+*Subject:* ${formData.subject}
 
-  const handleWhatsAppClick = async () => {
-    // Open WhatsApp
+*Message:*
+${formData.message}`;
+
+    // Encode message for URL
+    const encodedMessage = encodeURIComponent(whatsappMessage);
+    
+    // Create WhatsApp URL
+    const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`;
+    
+    // Open WhatsApp in new tab
     window.open(whatsappUrl, '_blank');
     
-    // Mark as WhatsApp sent
-    try {
-      await contactApi.markWhatsAppSent(contactId);
-      setWhatsappSent(true);
-      toast.success('WhatsApp message tracked!');
-    } catch (error) {
-      console.error('Failed to track WhatsApp status:', error);
-    }
+    toast.success('Opening WhatsApp...');
+    setLoading(false);
+    
+    // Reset form after a short delay
+    setTimeout(() => {
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        subject: '',
+        message: '',
+      });
+    }, 1000);
   };
-
-  const resetForm = () => {
-    setSubmitted(false);
-    setWhatsappUrl('');
-    setContactId('');
-    setWhatsappSent(false);
-    setFormData({
-      name: '',
-      email: '',
-      phone: '',
-      subject: '',
-      message: '',
-    });
-  };
-
-  if (submitted) {
-    return (
-      <div className="contact-page">
-        <div className="container">
-          <div className="success-message">
-            <div className="success-icon">
-              <FiCheck />
-            </div>
-            <h2>Thank You!</h2>
-            <p>Your message has been sent successfully.</p>
-            <p className="whatsapp-info">
-              For faster response, click the button below to send your message directly to our WhatsApp!
-            </p>
-            <button 
-              className={`btn btn-whatsapp btn-lg ${whatsappSent ? 'sent' : ''}`}
-              onClick={handleWhatsAppClick}
-            >
-              <FaWhatsapp />
-              {whatsappSent ? 'WhatsApp Sent ✓' : 'Send via WhatsApp'}
-            </button>
-            {whatsappSent && (
-              <p className="whatsapp-confirmed">
-                <FiCheck /> We've received your WhatsApp message notification!
-              </p>
-            )}
-            <div className="success-actions">
-              <button className="btn btn-secondary" onClick={resetForm}>
-                Send Another Message
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="contact-page">
@@ -149,6 +112,7 @@ const Contact: React.FC = () => {
                   className="form-input"
                   value={formData.name}
                   onChange={handleChange}
+                  placeholder="Enter your name"
                   required
                 />
               </div>
@@ -160,6 +124,7 @@ const Contact: React.FC = () => {
                   className="form-input"
                   value={formData.email}
                   onChange={handleChange}
+                  placeholder="Enter your email"
                   required
                 />
               </div>
@@ -174,6 +139,7 @@ const Contact: React.FC = () => {
                   className="form-input"
                   value={formData.phone}
                   onChange={handleChange}
+                  placeholder="Enter your phone number"
                 />
               </div>
               <div className="form-group">
@@ -207,9 +173,9 @@ const Contact: React.FC = () => {
               />
             </div>
 
-            <button type="submit" className="btn btn-primary btn-lg" disabled={loading}>
-              <FiSend />
-              {loading ? 'Sending...' : 'Send Message'}
+            <button type="submit" className="btn btn-whatsapp btn-lg" disabled={loading}>
+              <FaWhatsapp />
+              {loading ? 'Opening WhatsApp...' : 'Send Message via WhatsApp'}
             </button>
           </form>
         </div>

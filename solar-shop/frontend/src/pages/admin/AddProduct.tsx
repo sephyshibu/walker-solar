@@ -1,11 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiSave, FiPlus, FiTrash2, FiUpload, FiArrowLeft, FiDollarSign } from 'react-icons/fi';
-import { productApi } from '../../services/api';
+import { productApi, categoryApi } from '../../services/api';
 import toast from 'react-hot-toast';
 import './Admin.css';
 import './AddProduct.css';
-
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+}
 const categories = [
   { value: 'solar_panels', label: 'Solar Panels' },
   { value: 'inverters', label: 'Inverters' },
@@ -41,6 +45,9 @@ const AddProduct: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+const [categoriesLoading, setCategoriesLoading] = useState(true);
+
   
   const [formData, setFormData] = useState({
     name: '',
@@ -70,6 +77,26 @@ const AddProduct: React.FC = () => {
     { minQuantity: 20, maxQuantity: 49, price: 0 },
     { minQuantity: 50, maxQuantity: null, price: 0 }
   ]);
+
+  // Load categories on mount
+useEffect(() => {
+  const loadCategories = async () => {
+    try {
+      const response = await categoryApi.getActive();
+      setCategories(response.data.data);
+      // Set default category if available
+      if (response.data.data.length > 0) {
+        setFormData(prev => ({ ...prev, category: response.data.data[0].slug }));
+      }
+    } catch (error) {
+      console.error('Failed to load categories:', error);
+      toast.error('Failed to load categories');
+    } finally {
+      setCategoriesLoading(false);
+    }
+  };
+  loadCategories();
+}, []);
 
  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
   const { name, value, type } = e.target;
@@ -268,10 +295,17 @@ const handleSubmit = async (e: React.FormEvent) => {
                   value={formData.category}
                   onChange={handleChange}
                   required
+                  disabled={categoriesLoading}
                 >
-                  {categories.map(cat => (
-                    <option key={cat.value} value={cat.value}>{cat.label}</option>
-                  ))}
+                  {categoriesLoading ? (
+                    <option value="">Loading categories...</option>
+                  ) : categories.length === 0 ? (
+                    <option value="">No categories available</option>
+                  ) : (
+                    categories.map(cat => (
+                      <option key={cat.slug} value={cat.slug}>{cat.name}</option>
+                    ))
+                  )}
                 </select>
               </div>
               <div className="form-group">

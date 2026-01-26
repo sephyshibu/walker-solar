@@ -212,7 +212,25 @@ export const productApi = {
   uploadVideo: (id: string, data: FormData) => api.post(`/products/${id}/video`, data, { headers: { 'Content-Type': 'multipart/form-data' } }),
   deleteVideo: (id: string) => api.delete(`/products/${id}/video`),
 };
-
+// Categories API
+export const categoryApi = {
+  // Public
+  getActive: () => api.get('/categories'),
+  getBySlug: (slug: string) => api.get(`/categories/slug/${slug}`),
+  
+  // Admin
+  getAll: (params?: any) => api.get('/admin/categories', { params }),
+  getById: (id: string) => api.get(`/admin/categories/${id}`),
+  getStats: () => api.get('/admin/categories/stats'),
+  create: (data: FormData) => api.post('/admin/categories', data, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  update: (id: string, data: FormData) => api.put(`/admin/categories/${id}`, data, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  delete: (id: string) => api.delete(`/admin/categories/${id}`),
+  toggleStatus: (id: string) => api.patch(`/admin/categories/${id}/toggle-status`),
+};
 // Cart
 export const cartApi = {
   get: () => api.get('/cart'),
@@ -259,6 +277,7 @@ export const galleryApi = {
   update: (id: string, data: FormData) => api.put(`/gallery/${id}`, data, { headers: { 'Content-Type': 'multipart/form-data' } }),
   delete: (id: string) => api.delete(`/gallery/${id}`),
   toggleActive: (id: string) => api.patch(`/gallery/${id}/toggle-active`),
+  getStats: () => api.get('/gallery/stats'),
 };
 
 // Contact

@@ -18,7 +18,13 @@ export class MongoGalleryRepository implements IGalleryRepository {
       updatedAt: doc.updatedAt
     });
   }
-
+async getStats(): Promise<{ total: number; active: number }> {
+    const [total, active] = await Promise.all([
+      GalleryModel.countDocuments({}),
+      GalleryModel.countDocuments({ isActive: true })
+    ]);
+    return { total, active };
+  }
   async create(item: GalleryItem): Promise<GalleryItem> {
     const doc = await GalleryModel.create(item.toObject());
     return this.documentToEntity(doc);

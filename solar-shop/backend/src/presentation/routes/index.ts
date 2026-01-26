@@ -17,7 +17,8 @@ import {
   uploadInvoice
 } from '../../infrastructure/config/cloudinary';
 import { UserRole } from '../../domain/entities/User';
-
+import { categoryController } from '../controllers/CategoryController';
+import { uploadCategoryImage } from '../../infrastructure/config/cloudinary';
 const router = Router();
 
 // ==================== SEO ROUTES ====================
@@ -90,14 +91,14 @@ router.get('/wishlist/check/:productId', authenticate, WishlistController.checkI
 // Public routes
 router.get('/gallery', GalleryController.getAll);
 router.get('/gallery/category/:category', GalleryController.getByCategory);
-router.get('/gallery/:id', GalleryController.getById);
+router.get('/gallery/stats', authenticate, authorize(UserRole.ADMIN), GalleryController.getStats);  // THIS MUST BE BEFORE /:id
+router.get('/gallery/:id', GalleryController.getById);  // THIS MUST BE AFTER /stats
 
 // Admin routes - Gallery Images (Cloudinary)
 router.post('/gallery', authenticate, authorize(UserRole.ADMIN), uploadGalleryImage.single('image'), GalleryController.create);
 router.put('/gallery/:id', authenticate, authorize(UserRole.ADMIN), uploadGalleryImage.single('image'), GalleryController.update);
 router.delete('/gallery/:id', authenticate, authorize(UserRole.ADMIN), GalleryController.delete);
 router.patch('/gallery/:id/toggle-active', authenticate, authorize(UserRole.ADMIN), GalleryController.toggleActive);
-
 // ==================== CONTACT ROUTES ====================
 // Public route
 router.post('/contact', ContactController.create);
@@ -118,4 +119,17 @@ router.get('/admin/users/:id', authenticate, authorize(UserRole.ADMIN), AdminCon
 router.patch('/admin/users/:id/block', authenticate, authorize(UserRole.ADMIN), AdminController.blockUser);
 router.patch('/admin/users/:id/unblock', authenticate, authorize(UserRole.ADMIN), AdminController.unblockUser);
 
+// ==================== CATEGORY ROUTES ====================
+// Public routes
+router.get('/categories', categoryController.getActive.bind(categoryController));
+router.get('/categories/slug/:slug', categoryController.getBySlug.bind(categoryController));
+
+// Admin routes
+router.get('/admin/categories', authenticate, authorize(UserRole.ADMIN), categoryController.getAll.bind(categoryController));
+router.get('/admin/categories/stats', authenticate, authorize(UserRole.ADMIN), categoryController.getStats.bind(categoryController));
+router.get('/admin/categories/:id', authenticate, authorize(UserRole.ADMIN), categoryController.getById.bind(categoryController));
+router.post('/admin/categories', authenticate, authorize(UserRole.ADMIN), uploadCategoryImage.single('image'), categoryController.create.bind(categoryController));
+router.put('/admin/categories/:id', authenticate, authorize(UserRole.ADMIN), uploadCategoryImage.single('image'), categoryController.update.bind(categoryController));
+router.delete('/admin/categories/:id', authenticate, authorize(UserRole.ADMIN), categoryController.delete.bind(categoryController));
+router.patch('/admin/categories/:id/toggle-status', authenticate, authorize(UserRole.ADMIN), categoryController.toggleStatus.bind(categoryController));
 export default router;
