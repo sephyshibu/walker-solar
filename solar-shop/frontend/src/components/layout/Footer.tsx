@@ -44,7 +44,6 @@ const Footer: React.FC = () => {
               </p>
               <div className="social-links">
                 <a href="#" aria-label="Facebook"><FiFacebook /></a>
-                <a href="#" aria-label="Twitter"><FiTwitter /></a>
                 <a href="#" aria-label="Instagram"><FiInstagram /></a>
                 <a href="#" aria-label="YouTube"><FiYoutube /></a>
               </div>
@@ -79,15 +78,15 @@ const Footer: React.FC = () => {
               <ul className="contact-list">
                 <li>
                   <FiMapPin />
-                  <span>123 Solar Street, Green City, India - 600001</span>
+                  <span>Walkers Building </span>
                 </li>
                 <li>
                   <FiPhone />
-                  <a href="tel:+919876543210">+91 98765 43210</a>
+                  <a href="tel:+916238093603">+91 62380 93603</a>
                 </li>
                 <li>
                   <FiMail />
-                  <a href="mailto:info@walkers.com">info@walkers.com</a>
+                  <a href="mailto:walkersgroup@gmail.com">walkersgroup@gmail.com</a>
                 </li>
               </ul>
             </div>

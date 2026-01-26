@@ -88,17 +88,17 @@ ${formData.message}`;
             <div className="info-card">
               <FiMapPin className="info-icon" />
               <h3>Our Location</h3>
-              <p>123 Solar Street<br />Green City, India - 600001</p>
+              <p>Walkers Building<br />St.Peter's Junction, Ring Road<br/>Pathanamthitta<br/>Kerala </p>
             </div>
             <div className="info-card">
               <FiPhone className="info-icon" />
               <h3>Phone</h3>
-              <p><a href="tel:+919876543210">+91 98765 43210</a></p>
+              <p><a href="tel:+916238093603">+91 62380 93603</a></p>
             </div>
             <div className="info-card">
               <FiMail className="info-icon" />
               <h3>Email</h3>
-              <p><a href="mailto:info@solarshop.com">info@solarshop.com</a></p>
+              <p><a href="mailto:walkersgroup@gmail.com">walkersgroup@gmail.com</a></p>
             </div>
           </div>
 

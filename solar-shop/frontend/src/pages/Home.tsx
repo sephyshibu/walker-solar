@@ -85,12 +85,19 @@ const Home: React.FC = () => {
           <div className="hero-text">
             <span className="hero-badge">⚡ WALKERS - Power Solutions</span>
             <h1>
-              Power Your Future with
-              <span className="highlight"> Clean Energy</span>
+              Smart
+               <span className="highlight"> Solar Energy</span>  & Advanced 
+              <span className="highlight"> Electric Fencing </span>
+              Solutions
             </h1>
             <p>
-              Premium solar products for homes and businesses. From high-efficiency panels 
-              to smart inverters and batteries - everything you need for sustainable energy.
+              At Walkers Power Solutions, we provide premium solar energy systems 
+              and high-security solar electric fencing for residential and commercial
+               properties. Beyond robust perimeter protection, we specialize in 
+               advanced power backup solutions utilizing the latest 
+               lithium battery technology (LiFePO4). From high-efficiency monocrystalline 
+               panels and smart inverters to long-lasting energy storage, we deliver sustainable,
+              cost-effective power that keeps your home or business running 24/7
             </p>
             <div className="hero-actions">
               <Link to="/products" className="btn btn-primary btn-lg">
@@ -100,7 +107,7 @@ const Home: React.FC = () => {
                 Get Quote
               </Link>
             </div>
-            <div className="hero-stats">
+            {/* <div className="hero-stats">
               <div className="stat">
                 <span className="stat-value">500+</span>
                 <span className="stat-label">Products</span>
@@ -113,7 +120,7 @@ const Home: React.FC = () => {
                 <span className="stat-value">25+</span>
                 <span className="stat-label">Years Warranty</span>
               </div>
-            </div>
+            </div> */}
           </div>
           <div className="hero-image">
             <div className="hero-image-wrapper">
@@ -129,7 +136,7 @@ const Home: React.FC = () => {
         <div className="container">
           <div className="section-header">
             <h2 className="section-title">Shop by Category</h2>
-            <p className="section-subtitle">Browse our wide range of solar products</p>
+
           </div>
           {categoriesLoading ? (
             <div className="categories-grid">
@@ -219,14 +226,14 @@ const Home: React.FC = () => {
       <section className="section cta-section">
         <div className="container">
           <div className="cta-content">
-            <h2>Ready to Switch to Solar?</h2>
-            <p>Get a free consultation and customized quote for your solar needs</p>
+            <h2>Smart Solar Power & Solar Security Fencing</h2>
+            <p>Get a free consultation and customized quote for your needs</p>
             <div className="cta-actions">
               <Link to="/contact" className="btn btn-primary btn-lg">
                 Contact Us <FiArrowRight />
               </Link>
-              <a href="tel:+919876543210" className="btn btn-outline btn-lg">
-                Call: +91 98765 43210
+              <a href="tel:+916238093603" className="btn btn-outline btn-lg">
+                Call: +91 62380 93603
               </a>
             </div>
           </div>
