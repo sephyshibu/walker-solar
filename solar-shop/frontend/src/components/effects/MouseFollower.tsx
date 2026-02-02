@@ -13,46 +13,36 @@ const MouseFollower: React.FC = () => {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [particles, setParticles] = useState<Particle[]>([]);
   const [isVisible, setIsVisible] = useState(false);
-  const [isTouchDevice, setIsTouchDevice] = useState(false);
   const particleId = useRef(0);
-  const lastPosRef = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
-    // Detect touch device
-    const checkTouchDevice = () => {
-      setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
-    };
-    checkTouchDevice();
-
     let animationFrame: number;
+    let lastX = 0;
+    let lastY = 0;
 
-    const updatePosition = (x: number, y: number) => {
-      setMousePos({ x, y });
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePos({ x: e.clientX, y: e.clientY });
       setIsVisible(true);
 
       // Calculate distance moved
       const distance = Math.sqrt(
-        Math.pow(x - lastPosRef.current.x, 2) + Math.pow(y - lastPosRef.current.y, 2)
+        Math.pow(e.clientX - lastX, 2) + Math.pow(e.clientY - lastY, 2)
       );
 
-      // Create particles based on movement speed
+      // Create particles based on mouse movement speed
       if (distance > 5) {
         const newParticle: Particle = {
           id: particleId.current++,
-          x: x,
-          y: y,
+          x: e.clientX,
+          y: e.clientY,
           size: Math.random() * 8 + 4,
           opacity: 1,
         };
 
         setParticles(prev => [...prev.slice(-30), newParticle]);
-        lastPosRef.current = { x, y };
+        lastX = e.clientX;
+        lastY = e.clientY;
       }
-    };
-
-    // Mouse events for desktop
-    const handleMouseMove = (e: MouseEvent) => {
-      updatePosition(e.clientX, e.clientY);
     };
 
     const handleMouseLeave = () => {
@@ -63,27 +53,6 @@ const MouseFollower: React.FC = () => {
       setIsVisible(true);
     };
 
-    // Touch events for mobile
-    const handleTouchStart = (e: TouchEvent) => {
-      if (e.touches.length > 0) {
-        const touch = e.touches[0];
-        updatePosition(touch.clientX, touch.clientY);
-      }
-    };
-
-    const handleTouchMove = (e: TouchEvent) => {
-      if (e.touches.length > 0) {
-        const touch = e.touches[0];
-        updatePosition(touch.clientX, touch.clientY);
-      }
-    };
-
-    const handleTouchEnd = () => {
-      // Keep visible briefly after touch ends
-      setTimeout(() => {
-        setIsVisible(false);
-      }, 500);
-    };
     // Fade out particles
     const fadeParticles = () => {
       setParticles(prev =>
@@ -94,27 +63,18 @@ const MouseFollower: React.FC = () => {
       animationFrame = requestAnimationFrame(fadeParticles);
     };
 
- if (!isTouchDevice) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseleave', handleMouseLeave);
-      document.addEventListener('mouseenter', handleMouseEnter);
-    } else {
-      document.addEventListener('touchstart', handleTouchStart, { passive: true });
-      document.addEventListener('touchmove', handleTouchMove, { passive: true });
-      document.addEventListener('touchend', handleTouchEnd);
-    }
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseleave', handleMouseLeave);
+    document.addEventListener('mouseenter', handleMouseEnter);
     animationFrame = requestAnimationFrame(fadeParticles);
 
     return () => {
-       document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseleave', handleMouseLeave);
       document.removeEventListener('mouseenter', handleMouseEnter);
-      document.removeEventListener('touchstart', handleTouchStart);
-      document.removeEventListener('touchmove', handleTouchMove);
-      document.removeEventListener('touchend', handleTouchEnd);
       cancelAnimationFrame(animationFrame);
     };
-  }, [isTouchDevice]);
+  }, []);
 
   return (
     <div className="mouse-follower-container">
