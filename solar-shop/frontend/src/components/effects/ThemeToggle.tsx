@@ -5,6 +5,7 @@ const ThemeToggle: React.FC = () => {
   const [isDark, setIsDark] = useState(true);
   const [isPulling, setIsPulling] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     // Check for saved theme preference
@@ -13,6 +14,16 @@ const ThemeToggle: React.FC = () => {
       setIsDark(savedTheme === 'dark');
       document.documentElement.setAttribute('data-theme', savedTheme);
     }
+
+    // Check if mobile
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   const handlePullStart = () => {
@@ -33,104 +44,128 @@ const ThemeToggle: React.FC = () => {
 
   const handlePullEnd = () => {
     if (pullDistance > 40) {
-      // Toggle theme
-      const newTheme = isDark ? 'light' : 'dark';
-      setIsDark(!isDark);
-      localStorage.setItem('theme', newTheme);
-      document.documentElement.setAttribute('data-theme', newTheme);
+      toggleThemeState();
     }
     
     setIsPulling(false);
     setPullDistance(0);
   };
 
+  const toggleThemeState = () => {
+    const newTheme = isDark ? 'light' : 'dark';
+    setIsDark(!isDark);
+    localStorage.setItem('theme', newTheme);
+    document.documentElement.setAttribute('data-theme', newTheme);
+  };
+
   const toggleTheme = () => {
-    // Animate the pull
-    setIsPulling(true);
-    setPullDistance(60);
-    
-    setTimeout(() => {
-      const newTheme = isDark ? 'light' : 'dark';
-      setIsDark(!isDark);
-      localStorage.setItem('theme', newTheme);
-      document.documentElement.setAttribute('data-theme', newTheme);
+    if (isMobile) {
+      // Direct toggle for mobile
+      toggleThemeState();
+    } else {
+      // Animate the pull for desktop
+      setIsPulling(true);
+      setPullDistance(60);
       
       setTimeout(() => {
-        setIsPulling(false);
-        setPullDistance(0);
-      }, 200);
-    }, 300);
+        toggleThemeState();
+        
+        setTimeout(() => {
+          setIsPulling(false);
+          setPullDistance(0);
+        }, 200);
+      }, 300);
+    }
   };
 
   return (
     <div className="theme-toggle-container">
-      {/* Lamp Fixture */}
-      <div className="lamp-fixture">
-        <div className="lamp-mount" />
-        <div className="lamp-cord" style={{ height: `${30 + pullDistance}px` }} />
-        <div className={`lamp-bulb ${!isDark ? 'lit' : ''}`}>
-          <div className="bulb-glow" />
-          <div className="bulb-glass" />
-          <div className="bulb-base" />
-        </div>
-        
-        {/* Pull Chain */}
-        <div 
-          className="pull-chain"
-          style={{ 
-            height: `${50 + pullDistance}px`,
-            transition: isPulling ? 'none' : 'height 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)'
-          }}
-        >
-          <div className="chain-links">
-            {[...Array(8 + Math.floor(pullDistance / 10))].map((_, i) => (
-              <div key={i} className="chain-link" />
-            ))}
+      {/* Desktop: Lamp Toggle */}
+      <div className={`lamp-toggle ${isMobile ? 'hidden' : ''}`}>
+        <div className="lamp-fixture">
+          <div className="lamp-mount" />
+          <div className="lamp-cord" style={{ height: `${30 + pullDistance}px` }} />
+          <div className={`lamp-bulb ${!isDark ? 'lit' : ''}`}>
+            <div className="bulb-glow" />
+            <div className="bulb-glass" />
+            <div className="bulb-base" />
           </div>
+          
+          {/* Pull Chain */}
           <div 
-            className="pull-handle"
-            onMouseDown={handlePullStart}
-            onTouchStart={handlePullStart}
-            onClick={toggleTheme}
+            className="pull-chain"
+            style={{ 
+              height: `${50 + pullDistance}px`,
+              transition: isPulling ? 'none' : 'height 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)'
+            }}
           >
-            <div className="handle-top" />
-            <div className="handle-body" />
+            <div className="chain-links">
+              {[...Array(8 + Math.floor(pullDistance / 10))].map((_, i) => (
+                <div key={i} className="chain-link" />
+              ))}
+            </div>
+            <div 
+              className="pull-handle"
+              onMouseDown={handlePullStart}
+              onTouchStart={handlePullStart}
+              onClick={toggleTheme}
+            >
+              <div className="handle-top" />
+              <div className="handle-body" />
+            </div>
           </div>
+
+          {/* Light Rays */}
+          {!isDark && (
+            <div className="light-rays">
+              {[...Array(12)].map((_, i) => (
+                <div 
+                  key={i} 
+                  className="ray" 
+                  style={{ 
+                    transform: `rotate(${i * 30}deg)`,
+                    animationDelay: `${i * 0.1}s`
+                  }} 
+                />
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Light Rays */}
-        {!isDark && (
-          <div className="light-rays">
-            {[...Array(12)].map((_, i) => (
-              <div 
-                key={i} 
-                className="ray" 
-                style={{ 
-                  transform: `rotate(${i * 30}deg)`,
-                  animationDelay: `${i * 0.1}s`
-                }} 
-              />
-            ))}
-          </div>
+        {/* Theme Label */}
+        <div className="theme-label">
+          {isDark ? '🌙' : '☀️'}
+        </div>
+
+        {/* Invisible overlay for drag detection */}
+        {isPulling && (
+          <div 
+            className="pull-overlay"
+            onMouseMove={handlePullMove}
+            onMouseUp={handlePullEnd}
+            onMouseLeave={handlePullEnd}
+            onTouchMove={handlePullMove}
+            onTouchEnd={handlePullEnd}
+          />
         )}
       </div>
 
-      {/* Theme Label */}
-      <div className="theme-label">
-        {isDark ? '🌙' : '☀️'}
+      {/* Mobile: Toggle Switch */}
+      <div className={`toggle-switch-wrapper ${isMobile ? '' : 'hidden'}`}>
+        <button
+          className={`toggle-switch ${isDark ? 'dark' : 'light'}`}
+          onClick={toggleTheme}
+          aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+        >
+          <span className="toggle-track">
+            <span className="toggle-thumb">
+              <span className="toggle-icon">
+                {isDark ? '🌙' : '☀️'}
+              </span>
+            </span>
+          </span>
+        </button>
       </div>
-
-      {/* Invisible overlay for drag detection */}
-      {isPulling && (
-        <div 
-          className="pull-overlay"
-          onMouseMove={handlePullMove}
-          onMouseUp={handlePullEnd}
-          onMouseLeave={handlePullEnd}
-          onTouchMove={handlePullMove}
-          onTouchEnd={handlePullEnd}
-        />
-      )}
     </div>
   );
 };

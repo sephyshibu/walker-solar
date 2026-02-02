@@ -10,6 +10,7 @@ interface Category {
   name: string;
   slug: string;
 }
+
 const Header: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -37,16 +38,28 @@ const Header: React.FC = () => {
   }, [location.pathname]);
 
   useEffect(() => {
-  const loadCategories = async () => {
-    try {
-      const response = await categoryApi.getActive();
-      setCategories(response.data.data);
-    } catch (error) {
-      console.error('Failed to load categories:', error);
+    const loadCategories = async () => {
+      try {
+        const response = await categoryApi.getActive();
+        setCategories(response.data.data);
+      } catch (error) {
+        console.error('Failed to load categories:', error);
+      }
+    };
+    loadCategories();
+  }, []);
+
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (sidebarOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
     }
-  };
-  loadCategories();
-}, []);
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [sidebarOpen]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,50 +75,36 @@ const Header: React.FC = () => {
     setUserMenuOpen(false);
   };
 
-  
-
   return (
     <header className={`header ${scrolled ? 'scrolled' : ''}`}>
       <div className="header-container">
         {/* Logo */}
         <Link to="/" className="logo">
           <img src="/Logo_transaparent.png" alt="Walkers" className="logo-icon" />
-          {/* <img src="/walkers_letters.png" alt="WALKERS" className="logo-icon-text" /> */}
         </Link>
 
         {/* Desktop Navigation */}
         <nav className="nav-desktop">
           <Link to="/" className={location.pathname === '/' ? 'active' : ''}>Home</Link>
           <div className="nav-dropdown">
-  <Link to="/products" className={location.pathname.startsWith('/products') ? 'active' : ''}>
-    Products
-  </Link>
-  <div className="dropdown-menu">
-    <Link to="/products">All Products</Link>  {/* Added this */}
-    {categories.map((cat) => (
-      <Link key={cat.slug} to={`/products?category=${cat.slug}`}>
-        {cat.name}
-      </Link>
-    ))}
-  </div>
-</div>
+            <Link to="/products" className={location.pathname.startsWith('/products') ? 'active' : ''}>
+              Products
+            </Link>
+            <div className="dropdown-menu">
+              <Link to="/products">All Products</Link>
+              {categories.map((cat) => (
+                <Link key={cat.slug} to={`/products?category=${cat.slug}`}>
+                  {cat.name}
+                </Link>
+              ))}
+            </div>
+          </div>
           <Link to="/gallery" className={location.pathname === '/gallery' ? 'active' : ''}>Gallery</Link>
           <Link to="/contact" className={location.pathname === '/contact' ? 'active' : ''}>Contact</Link>
           {isAdmin && (
             <Link to="/admin" className={location.pathname.startsWith('/admin') ? 'active' : ''}>Admin</Link>
           )}
         </nav>
-
-        {/* Search Bar */}
-        {/* <form className="search-form" onSubmit={handleSearch}>
-          <FiSearch className="search-icon" />
-          <input
-            type="text"
-            placeholder="Search products..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </form> */}
 
         {/* Actions */}
         <div className="header-actions">
@@ -166,7 +165,11 @@ const Header: React.FC = () => {
           )}
 
           {/* Mobile Menu Toggle */}
-          <button className="mobile-menu-btn" onClick={toggleSidebar}>
+          <button 
+            className="mobile-menu-btn" 
+            onClick={toggleSidebar}
+            aria-label={sidebarOpen ? 'Close menu' : 'Open menu'}
+          >
             {sidebarOpen ? <FiX /> : <FiMenu />}
           </button>
         </div>
@@ -174,29 +177,47 @@ const Header: React.FC = () => {
 
       {/* Mobile Navigation */}
       <nav className={`nav-mobile ${sidebarOpen ? 'open' : ''}`}>
-        <Link to="/">Home</Link>
-        <Link to="/products">Products</Link>
-        {categories.map((cat) => (
-          <Link key={cat.slug} to={`/products?category=${cat.slug}`} className="sub-link">
-            {cat.name}
-          </Link>
-        ))}
-        <Link to="/gallery">Gallery</Link>
-        <Link to="/contact">Contact</Link>
-        {isAuthenticated ? (
-          <>
-            <Link to="/profile">My Profile</Link>
-            <Link to="/orders">My Orders</Link>
-            <Link to="/wishlist">Wishlist</Link>
-            {isAdmin && <Link to="/admin">Admin Panel</Link>}
-            <button onClick={handleLogout} className="logout-btn">Logout</button>
-          </>
-        ) : (
-          <>
-            <Link to="/login">Login</Link>
-            <Link to="/register">Register</Link>
-          </>
-        )}
+        {/* Close Button inside mobile menu */}
+        <button 
+          className="mobile-close-btn" 
+          onClick={closeSidebar}
+          aria-label="Close menu"
+        >
+          <FiX />
+        </button>
+
+        <div className="mobile-menu-content">
+          <Link to="/" onClick={closeSidebar}>Home</Link>
+          <Link to="/products" onClick={closeSidebar}>Products</Link>
+          {categories.map((cat) => (
+            <Link 
+              key={cat.slug} 
+              to={`/products?category=${cat.slug}`} 
+              className="sub-link"
+              onClick={closeSidebar}
+            >
+              {cat.name}
+            </Link>
+          ))}
+          <Link to="/gallery" onClick={closeSidebar}>Gallery</Link>
+          <Link to="/contact" onClick={closeSidebar}>Contact</Link>
+          {isAuthenticated ? (
+            <>
+              <Link to="/profile" onClick={closeSidebar}>My Profile</Link>
+              <Link to="/orders" onClick={closeSidebar}>My Orders</Link>
+              <Link to="/wishlist" onClick={closeSidebar}>Wishlist</Link>
+              {isAdmin && <Link to="/admin" onClick={closeSidebar}>Admin Panel</Link>}
+              <button onClick={() => { handleLogout(); closeSidebar(); }} className="logout-btn">
+                <FiLogOut /> Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/login" onClick={closeSidebar}>Login</Link>
+              <Link to="/register" onClick={closeSidebar}>Register</Link>
+            </>
+          )}
+        </div>
       </nav>
 
       {/* Overlay */}
