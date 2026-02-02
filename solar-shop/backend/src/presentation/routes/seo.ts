@@ -7,7 +7,7 @@ const productRepository = new MongoProductRepository();
 // Generate dynamic sitemap.xml
 router.get('/sitemap.xml', async (req: Request, res: Response) => {
   try {
-    const baseUrl = process.env.FRONTEND_URL || 'https://walkers.com';
+    const baseUrl = process.env.FRONTEND_URL || 'https://walkers.org.in';
     
     // Get all active products
     const products = await productRepository.findAll(
