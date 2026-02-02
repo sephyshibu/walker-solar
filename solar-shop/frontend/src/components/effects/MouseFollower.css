@@ -115,10 +115,24 @@ button:hover ~ .mouse-follower-container .cursor-ring {
   border-color: var(--color-primary);
 }
 
-/* Disable on mobile/touch devices */
-@media (hover: none) and (pointer: coarse) {
-  .mouse-follower-container {
-    display: none;
+/* Mobile/tablet optimizations */
+@media (max-width: 1024px) {
+  .mouse-follower-container .cursor-glow {
+    width: 250px;
+    height: 250px;
+  }
+  
+  .mouse-follower-container .cursor-particle {
+    width: 6px !important;
+    height: 6px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .mouse-follower-container .cursor-glow {
+    width: 200px;
+    height: 200px;
+    filter: blur(12px);
   }
 }
 
@@ -135,4 +149,34 @@ button:hover ~ .mouse-follower-container .cursor-ring {
   .mouse-follower-container {
     display: none;
   }
+
+  .mouse-follower-container {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  overflow: hidden;
+}
+/* Touch device optimizations */
+.mouse-follower-container.touch-device .cursor-glow {
+  width: 300px;
+  height: 300px;
+  filter: blur(15px);
+}
+
+.mouse-follower-container.touch-device .cursor-dot {
+  width: 12px;
+  height: 12px;
+  box-shadow: 
+    0 0 15px var(--color-primary),
+    0 0 30px var(--color-primary),
+    0 0 45px rgba(245, 158, 11, 0.6);
+}
+
+.mouse-follower-container.touch-device .cursor-ring {
+  width: 50px;
+  height: 50px;
+  border-width: 3px;
+}
+
 }
