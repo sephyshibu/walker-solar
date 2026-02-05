@@ -1,4 +1,4 @@
-import { Product, ProductCategory, ProductStatus, ProductProps } from '../../../domain/entities/Product';
+import { Product, ProductStatus, ProductProps } from '../../../domain/entities/Product';
 import { IProductRepository, PaginationOptions, PaginatedResult } from '../../../domain/repositories';
 import { ProductModel, ProductDocument } from '../models/ProductModel';
 
@@ -10,7 +10,7 @@ export class MongoProductRepository implements IProductRepository {
       slug: doc.slug,
       description: doc.description,
       shortDescription: doc.shortDescription,
-      category: doc.category as ProductCategory,
+      category: doc.category.toString(),
       price: doc.price,
       discountPrice: doc.discountPrice,
     priceTiers: doc.priceTiers || [],  // ✅ Now included!
@@ -55,7 +55,8 @@ export class MongoProductRepository implements IProductRepository {
   async findAll(
     options: PaginationOptions,
     filters?: {
-      category?: ProductCategory;
+      category?: string;
+
       status?: ProductStatus;
       isFeatured?: boolean;
       minPrice?: number;
@@ -133,11 +134,11 @@ export class MongoProductRepository implements IProductRepository {
     return docs.map(doc => this.documentToEntity(doc));
   }
 
-  async findByCategory(category: ProductCategory, options: PaginationOptions): Promise<PaginatedResult<Product>> {
+  async findByCategory(category: string, options: PaginationOptions): Promise<PaginatedResult<Product>> {
     return this.findAll(options, { category, status: ProductStatus.ACTIVE });
   }
 
-  async count(filters?: { category?: ProductCategory; status?: ProductStatus }): Promise<number> {
+  async count(filters?: { category?: string; status?: ProductStatus }): Promise<number> {
     const query: any = {};
     if (filters?.category) query.category = filters.category;
     if (filters?.status) query.status = filters.status;

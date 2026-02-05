@@ -1,25 +1,18 @@
-import React, { useState,useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiSave, FiPlus, FiTrash2, FiUpload, FiArrowLeft, FiDollarSign } from 'react-icons/fi';
 import { productApi, categoryApi } from '../../services/api';
 import toast from 'react-hot-toast';
 import './Admin.css';
 import './AddProduct.css';
+
 interface Category {
-  id: string;
+  id: string; // Ensure your backend sends 'id' or '_id'
   name: string;
   slug: string;
 }
-const categories = [
-  { value: 'solar_panels', label: 'Solar Panels' },
-  { value: 'inverters', label: 'Inverters' },
-  { value: 'batteries', label: 'Batteries' },
-  { value: 'charge_controllers', label: 'Charge Controllers' },
-  { value: 'mounting_systems', label: 'Mounting Systems' },
-  { value: 'cables_connectors', label: 'Cables & Connectors' },
-  { value: 'accessories', label: 'Accessories' },
-];
 
+// Keep static options for things that don't come from DB
 const gstRateOptions = [
   { value: 0, label: 'No GST (0%)' },
   { value: 5, label: 'GST 5%' },
@@ -45,18 +38,19 @@ const AddProduct: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  
+  // Categories state
   const [categories, setCategories] = useState<Category[]>([]);
-const [categoriesLoading, setCategoriesLoading] = useState(true);
-
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
   
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     shortDescription: '',
-    category: 'solar_panels',
+    category: '', // Initialize empty, will be set after categories load
     price: '',
     discountPrice: '',
-    gstRate: '18', // Default 18% GST
+    gstRate: '18',
     stock: '',
     sku: '',
     brand: '',
@@ -79,38 +73,39 @@ const [categoriesLoading, setCategoriesLoading] = useState(true);
   ]);
 
   // Load categories on mount
-useEffect(() => {
-  const loadCategories = async () => {
-    try {
-      const response = await categoryApi.getActive();
-      setCategories(response.data.data);
-      // Set default category if available
-      if (response.data.data.length > 0) {
-        setFormData(prev => ({ ...prev, category: response.data.data[0].slug }));
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const response = await categoryApi.getActive();
+        const categoryList = response.data.data;
+        setCategories(categoryList);
+        
+        // FIX 1: Set default category to the first available ID (not slug)
+        if (categoryList.length > 0) {
+          setFormData(prev => ({ 
+            ...prev, 
+            category: categoryList[0].id 
+          }));
+        }
+      } catch (error) {
+        console.error('Failed to load categories:', error);
+        toast.error('Failed to load categories');
+      } finally {
+        setCategoriesLoading(false);
       }
-    } catch (error) {
-      console.error('Failed to load categories:', error);
-      toast.error('Failed to load categories');
-    } finally {
-      setCategoriesLoading(false);
+    };
+    loadCategories();
+  }, []);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    if (type === 'checkbox') {
+      setFormData({ ...formData, [name]: (e.target as HTMLInputElement).checked });
+    } else {
+      setFormData({ ...formData, [name]: value });
     }
   };
-  loadCategories();
-}, []);
 
- const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-  const { name, value, type } = e.target;
-  if (type === 'checkbox') {
-    setFormData({ ...formData, [name]: (e.target as HTMLInputElement).checked });
-  } else {
-    setFormData({ ...formData, [name]: value });
-  }
-};
-// Add this new function after handleChange
-const handleStockChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  const newStock = e.target.value;
-  setFormData({ ...formData, stock: newStock });
-};
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length + images.length > 10) {
@@ -190,73 +185,75 @@ const handleStockChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     }
   };
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  
-  if (!formData.name || !formData.description || !formData.price || !formData.stock || !formData.sku) {
-    toast.error('Please fill in all required fields');
-    return;
-  }
-
-  // Validate discount price must be less than retail price
-  if (formData.discountPrice) {
-    const retailPrice = parseFloat(formData.price);
-    const discountPrice = parseFloat(formData.discountPrice);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     
-    if (discountPrice >= retailPrice) {
-      toast.error('Discount price must be less than retail price');
+    if (!formData.name || !formData.description || !formData.price || !formData.stock || !formData.sku) {
+      toast.error('Please fill in all required fields');
       return;
     }
-  }
 
-  setLoading(true);
-
-  try {
-    const submitData = new FormData();
-    
-    // Add basic fields
-    submitData.append('name', formData.name);
-    submitData.append('description', formData.description);
-    submitData.append('shortDescription', formData.shortDescription);
-    submitData.append('category', formData.category);
-    submitData.append('price', formData.price);
-    if (formData.discountPrice) submitData.append('discountPrice', formData.discountPrice);
-    submitData.append('gstRate', formData.gstRate);
-    submitData.append('stock', formData.stock);
-    submitData.append('sku', formData.sku.toUpperCase());
-    if (formData.brand) submitData.append('brand', formData.brand);
-    if (formData.warranty) submitData.append('warranty', formData.warranty);
-    submitData.append('isFeatured', String(formData.isFeatured));
-
-    // Add specifications (filter empty ones)
-    const validSpecs = specifications.filter(s => s.key && s.value);
-    submitData.append('specifications', JSON.stringify(validSpecs));
-
-    // Add features (filter empty ones)
-    const validFeatures = features.filter(f => f.trim());
-    submitData.append('features', JSON.stringify(validFeatures));
-
-    // Add price tiers if enabled
-    if (enableTieredPricing) {
-      const validTiers = priceTiers.filter(t => t.minQuantity > 0 && t.price > 0);
-      submitData.append('priceTiers', JSON.stringify(validTiers));
+    // Validate discount price
+    if (formData.discountPrice) {
+      const retailPrice = parseFloat(formData.price);
+      const discountPrice = parseFloat(formData.discountPrice);
+      
+      if (discountPrice >= retailPrice) {
+        toast.error('Discount price must be less than retail price');
+        return;
+      }
     }
 
-    // Add images
-    images.forEach(image => {
-      submitData.append('images', image);
-    });
+    setLoading(true);
 
-    await productApi.create(submitData);
-    
-    toast.success('Product created successfully!');
-    navigate('/admin/products');
-  } catch (error: any) {
-    toast.error(error.response?.data?.message || 'Failed to create product');
-  } finally {
-    setLoading(false);
-  }
-};
+    try {
+      const submitData = new FormData();
+      
+      // Append basic fields
+      submitData.append('name', formData.name);
+      submitData.append('description', formData.description);
+      submitData.append('shortDescription', formData.shortDescription);
+      
+      // CRITICAL: This now sends the ID, not the slug/name
+      submitData.append('category', formData.category);
+      
+      submitData.append('price', formData.price);
+      if (formData.discountPrice) submitData.append('discountPrice', formData.discountPrice);
+      submitData.append('gstRate', formData.gstRate);
+      submitData.append('stock', formData.stock);
+      submitData.append('sku', formData.sku.toUpperCase());
+      if (formData.brand) submitData.append('brand', formData.brand);
+      if (formData.warranty) submitData.append('warranty', formData.warranty);
+      submitData.append('isFeatured', String(formData.isFeatured));
+
+      // Append JSON fields
+      const validSpecs = specifications.filter(s => s.key && s.value);
+      submitData.append('specifications', JSON.stringify(validSpecs));
+
+      const validFeatures = features.filter(f => f.trim());
+      submitData.append('features', JSON.stringify(validFeatures));
+
+      if (enableTieredPricing) {
+        const validTiers = priceTiers.filter(t => t.minQuantity > 0 && t.price > 0);
+        submitData.append('priceTiers', JSON.stringify(validTiers));
+      }
+
+      // Append Images
+      images.forEach(image => {
+        submitData.append('images', image);
+      });
+
+      await productApi.create(submitData);
+      
+      toast.success('Product created successfully!');
+      navigate('/admin/products');
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.response?.data?.message || 'Failed to create product');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="admin-page">
@@ -303,7 +300,11 @@ const handleSubmit = async (e: React.FormEvent) => {
                     <option value="">No categories available</option>
                   ) : (
                     categories.map(cat => (
-                      <option key={cat.slug} value={cat.slug}>{cat.name}</option>
+                      /* FIX 2: Use cat.id as the value. 
+                         Ensure your Category interface matches API response (id vs _id) */
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
                     ))
                   )}
                 </select>
@@ -379,9 +380,6 @@ const handleSubmit = async (e: React.FormEvent) => {
                 min="0"
                 step="0.01"
               />
-              {formData.discountPrice && formData.price && parseFloat(formData.discountPrice) >= parseFloat(formData.price) && (
-                <small className="error-text">Discount price must be less than retail price</small>
-              )}
             </div>
               <div className="form-group">
                 <label className="form-label">GST Rate *</label>
@@ -437,7 +435,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                 <div className="tiered-pricing-header">
                   <h3><FiDollarSign /> Bulk Pricing Tiers</h3>
                   <p className="tiered-pricing-desc">
-                    Set different prices based on quantity ordered. Customers will automatically get the best price for their quantity.
+                    Set different prices based on quantity ordered.
                   </p>
                 </div>
 
@@ -502,33 +500,6 @@ const handleSubmit = async (e: React.FormEvent) => {
                 <button type="button" className="btn btn-secondary btn-sm" onClick={addPriceTier}>
                   <FiPlus /> Add Price Tier
                 </button>
-
-                {/* Preview */}
-                {formData.price && (
-                  <div className="tier-preview">
-                    <h4>Price Preview:</h4>
-                    <ul>
-                      <li>
-                        <span>1-{priceTiers[0]?.minQuantity - 1 || 9} units:</span>
-                        <strong>₹{parseFloat(formData.discountPrice || formData.price).toLocaleString()}</strong>
-                        <em>(Base price)</em>
-                      </li>
-                      {priceTiers.filter(t => t.price > 0).map((tier, index) => (
-                        <li key={index}>
-                          <span>
-                            {tier.minQuantity}-{tier.maxQuantity || '∞'} units:
-                          </span>
-                          <strong>₹{tier.price.toLocaleString()}</strong>
-                          {tier.price < parseFloat(formData.discountPrice || formData.price) && (
-                            <em className="savings-text">
-                              (Save {Math.round(((parseFloat(formData.discountPrice || formData.price) - tier.price) / parseFloat(formData.discountPrice || formData.price)) * 100)}%)
-                            </em>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
               </div>
             )}
           </div>
@@ -623,21 +594,21 @@ const handleSubmit = async (e: React.FormEvent) => {
                 <input
                   type="text"
                   className="form-input"
-                  placeholder="Property (e.g., Power Output)"
+                  placeholder="Property"
                   value={spec.key}
                   onChange={(e) => handleSpecificationChange(index, 'key', e.target.value)}
                 />
                 <input
                   type="text"
                   className="form-input"
-                  placeholder="Value (e.g., 400)"
+                  placeholder="Value"
                   value={spec.value}
                   onChange={(e) => handleSpecificationChange(index, 'value', e.target.value)}
                 />
                 <input
                   type="text"
                   className="form-input spec-unit"
-                  placeholder="Unit (e.g., W)"
+                  placeholder="Unit"
                   value={spec.unit || ''}
                   onChange={(e) => handleSpecificationChange(index, 'unit', e.target.value)}
                 />
@@ -665,7 +636,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                 <input
                   type="text"
                   className="form-input"
-                  placeholder="e.g., High efficiency cells with 21% conversion rate"
+                  placeholder="e.g., High efficiency cells"
                   value={feature}
                   onChange={(e) => handleFeatureChange(index, e.target.value)}
                 />

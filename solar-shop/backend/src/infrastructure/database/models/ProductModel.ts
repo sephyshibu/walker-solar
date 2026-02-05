@@ -1,7 +1,32 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import { ProductProps, ProductCategory, ProductStatus, ProductSpecification, ProductVideo, PriceTier, GSTRate } from '../../../domain/entities/Product';
+import { ProductProps, ProductStatus, ProductSpecification, ProductVideo, PriceTier, GSTRate } from '../../../domain/entities/Product';
 
-export interface ProductDocument extends Omit<ProductProps, 'id'>, Document {}
+export interface ProductDocument extends Document {
+  name: string;
+  slug: string;
+  description: string;
+  shortDescription?: string;
+  category: mongoose.Types.ObjectId; // ✅ ObjectId here
+  price: number;
+  discountPrice?: number;
+  gstRate: number;
+  priceTiers: PriceTier[];
+  images: string[];
+  imagePublicIds: string[];
+  video?: ProductVideo;
+  specifications: ProductSpecification[];
+  features: string[];
+  stock: number;
+  sku: string;
+  brand?: string;
+  warranty?: string;
+  status: ProductStatus;
+  isFeatured: boolean;
+  viewCount: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 
 const SpecificationSchema = new Schema<ProductSpecification>({
   key: { type: String, required: true },
@@ -38,11 +63,16 @@ const ProductSchema = new Schema<ProductDocument>({
     required: true 
   },
   shortDescription: { type: String },
-  category: { 
-    type: String, 
-    enum: Object.values(ProductCategory), 
-    required: true 
-  },
+  
+ category: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: 'Category',
+  required: true,
+  index: true
+}
+,
+
+
   price: { 
     type: Number, 
     required: true,

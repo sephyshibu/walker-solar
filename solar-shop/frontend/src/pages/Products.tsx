@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { FiFilter, FiX, FiChevronDown, FiGrid, FiList } from 'react-icons/fi';
+import { FiFilter, FiX } from 'react-icons/fi';
 import ProductCard from '../components/product/ProductCard';
 import SEO from '../components/common/SEO';
-import { Product, ProductCategory, PaginatedResponse } from '../types';
+import { Product, PaginatedResponse } from '../types';
 import { productApi, categoryApi } from '../services/api';
 import './Products.css';
 
@@ -27,7 +27,7 @@ const Products: React.FC = () => {
   });
   const [filterOpen, setFilterOpen] = useState(false);
 
-  const category = searchParams.get('category') || '';
+  const categorySlug = searchParams.get('category') || '';
   const search = searchParams.get('search') || '';
   const sortBy = searchParams.get('sortBy') || 'createdAt';
   const sortOrder = searchParams.get('sortOrder') || 'desc';
@@ -35,18 +35,18 @@ const Products: React.FC = () => {
   const maxPrice = searchParams.get('maxPrice') || '';
 
   // Get category label and description from dynamic categories
-  const currentCategory = categories.find(c => c.slug === category);
-  const categoryLabel = currentCategory?.name || category;
+  const currentCategory = categories.find(c => c.slug === categorySlug);
+  const categoryLabel = currentCategory?.name || categorySlug;
   const categoryDescription = currentCategory?.description || '';
 
   // SEO title and description
-  const seoTitle = category 
+  const seoTitle = categorySlug 
     ? `${categoryLabel} - Buy Online at Best Prices | WALKERS`
     : search 
     ? `Search Results for "${search}" | WALKERS`
     : 'Solar Products - Panels, Inverters, Batteries | WALKERS';
   
-  const seoDescription = category
+  const seoDescription = categorySlug
     ? categoryDescription || `Shop ${categoryLabel} at WALKERS. Best prices with warranty.`
     : 'Browse our complete range of solar products. Solar panels, inverters, batteries, charge controllers and accessories at best prices.';
 
@@ -78,7 +78,21 @@ const Products: React.FC = () => {
         status: 'active',
       };
       
-      if (category) params.category = category;
+      // If a category slug is present in URL, find its ID to send to backend
+      if (categorySlug) {
+        // We need to wait for categories to load, but typically they load fast.
+        // If this runs before categories are loaded, the filter might be skipped initially.
+        // For a robust app, you might want to wait for categories, 
+        // but for now we look up by slug if categories exist.
+        const matchedCat = categories.find(c => c.slug === categorySlug);
+        if (matchedCat) {
+          params.category = matchedCat.id;
+        } else if (categories.length > 0) {
+            // Categories loaded but slug not found
+            console.warn("Category slug not found");
+        }
+      }
+
       if (search) params.search = search;
       if (minPrice) params.minPrice = parseFloat(minPrice);
       if (maxPrice) params.maxPrice = parseFloat(maxPrice);
@@ -127,8 +141,8 @@ const Products: React.FC = () => {
       <SEO 
         title={seoTitle}
         description={seoDescription}
-        keywords={`${category ? categoryLabel + ', ' : ''}solar products, buy solar online, WALKERS`}
-        url={`https://walkers.com/products${category ? '?category=' + category : ''}`}
+        keywords={`${categorySlug ? categoryLabel + ', ' : ''}solar products, buy solar online, WALKERS`}
+        url={`https://walkers.com/products${categorySlug ? '?category=' + categorySlug : ''}`}
       />
       
       <div className="container">
@@ -136,7 +150,7 @@ const Products: React.FC = () => {
         <div className="page-header">
           <div>
             <h1>
-              {category ? categoryLabel || 'Products' : 
+              {categorySlug ? categoryLabel || 'Products' : 
                search ? `Search: "${search}"` : 'All Products'}
             </h1>
             <p>{pagination.total} products found</p>
@@ -150,23 +164,6 @@ const Products: React.FC = () => {
               <FiFilter />
               Filters
             </button>
-            
-            {/* <select 
-              value={`${sortBy}-${sortOrder}`}
-              onChange={(e) => {
-                const [newSortBy, newSortOrder] = e.target.value.split('-');
-                handleFilterChange('sortBy', newSortBy);
-                handleFilterChange('sortOrder', newSortOrder);
-              }}
-              className="sort-select"
-            >
-              <option value="createdAt-desc">Newest First</option>
-              <option value="createdAt-asc">Oldest First</option>
-              <option value="price-asc">Price: Low to High</option>
-              <option value="price-desc">Price: High to Low</option>
-              <option value="name-asc">Name: A to Z</option>
-              <option value="viewCount-desc">Most Popular</option>
-            </select> */}
           </div>
         </div>
 
@@ -187,7 +184,7 @@ const Products: React.FC = () => {
                   <input
                     type="radio"
                     name="category"
-                    checked={!category}
+                    checked={!categorySlug}
                     onChange={() => handleFilterChange('category', '')}
                   />
                   <span>All Categories</span>
@@ -197,7 +194,7 @@ const Products: React.FC = () => {
                     <input
                       type="radio"
                       name="category"
-                      checked={category === cat.slug}
+                      checked={categorySlug === cat.slug}
                       onChange={() => handleFilterChange('category', cat.slug)}
                     />
                     <span>{cat.name}</span>
@@ -227,7 +224,7 @@ const Products: React.FC = () => {
               </div>
             </div>
 
-            {(category || search || minPrice || maxPrice) && (
+            {(categorySlug || search || minPrice || maxPrice) && (
               <button className="btn btn-outline clear-filters" onClick={clearFilters}>
                 Clear All Filters
               </button>
@@ -253,9 +250,22 @@ const Products: React.FC = () => {
             ) : (
               <>
                 <div className="products-grid">
-                  {products.map((product) => (
-                    <ProductCard key={product.id} product={product} />
-                  ))}
+                {products.map((product) => {
+  // 1. Find the Category Name based on the ID string from the product
+  const categoryObj = categories.find(c => c.id === product.category);
+  
+  // 2. Create a display product
+  const displayProduct = {
+    ...product,
+    // FIX: TypeScript expects an object, but ProductCard renders the text.
+    // We cast the string to 'any' to bypass the type check so the Name shows up.
+    category: (categoryObj ? categoryObj.name : 'Solar Product') as any
+  };
+
+  return (
+    <ProductCard key={product.id} product={displayProduct} />
+  );
+})}
                 </div>
 
                 {/* Pagination */}

@@ -1,12 +1,12 @@
-import { Product, ProductCategory, ProductStatus, ProductSpecification, ProductVideo, PriceTier } from '../../../domain/entities/Product';
-import { IProductRepository, PaginationOptions, PaginatedResult } from '../../../domain/repositories';
+import { Product, ProductStatus, ProductSpecification, ProductVideo, PriceTier } from '../../../domain/entities/Product';
+import { IProductRepository, ICategoryRepository, PaginationOptions, PaginatedResult } from '../../../domain/repositories';
 import { AppError } from '../../../shared/errors/AppError';
 
 interface CreateProductDTO {
   name: string;
   description: string;
   shortDescription?: string;
-  category: ProductCategory;
+  category: string; // Category ID instead of enum
   price: number;
   discountPrice?: number;
   priceTiers?: PriceTier[];
@@ -26,7 +26,7 @@ interface UpdateProductDTO {
   name?: string;
   description?: string;
   shortDescription?: string;
-  category?: ProductCategory;
+  category?: string; // Category ID instead of enum
   price?: number;
   discountPrice?: number;
   priceTiers?: PriceTier[];
@@ -44,7 +44,7 @@ interface UpdateProductDTO {
 }
 
 interface ProductFilters {
-  category?: ProductCategory;
+  category?: string;
   status?: ProductStatus;
   isFeatured?: boolean;
   minPrice?: number;
@@ -53,9 +53,18 @@ interface ProductFilters {
 }
 
 export class CreateProductUseCase {
-  constructor(private productRepository: IProductRepository) {}
+  constructor(
+    private productRepository: IProductRepository,
+    private categoryRepository: ICategoryRepository
+  ) {}
 
   async execute(data: CreateProductDTO): Promise<Product> {
+    // Validate category exists
+    const categoryExists = await this.categoryRepository.findById(data.category);
+    if (!categoryExists) {
+      throw new AppError('Invalid category', 400);
+    }
+
     const existingSku = await this.productRepository.findBySku(data.sku);
     if (existingSku) {
       throw new AppError('Product with this SKU already exists', 400);
@@ -125,7 +134,7 @@ export class GetFeaturedProductsUseCase {
 export class GetProductsByCategoryUseCase {
   constructor(private productRepository: IProductRepository) {}
 
-  async execute(category: ProductCategory, options: PaginationOptions): Promise<PaginatedResult<Product>> {
+  async execute(category: string, options: PaginationOptions): Promise<PaginatedResult<Product>> {
     return this.productRepository.findByCategory(category, options);
   }
 }
@@ -139,12 +148,23 @@ export class SearchProductsUseCase {
 }
 
 export class UpdateProductUseCase {
-  constructor(private productRepository: IProductRepository) {}
+  constructor(
+    private productRepository: IProductRepository,
+    private categoryRepository: ICategoryRepository
+  ) {}
 
   async execute(id: string, data: UpdateProductDTO): Promise<Product> {
     const product = await this.productRepository.findById(id);
     if (!product) {
       throw new AppError('Product not found', 404);
+    }
+
+    // Validate category if updating
+    if (data.category) {
+      const categoryExists = await this.categoryRepository.findById(data.category);
+      if (!categoryExists) {
+        throw new AppError('Invalid category', 400);
+      }
     }
 
     if (data.sku && data.sku !== product.sku) {
@@ -232,7 +252,10 @@ export class SetFeaturedProductUseCase {
 }
 
 export class GetProductStatsUseCase {
-  constructor(private productRepository: IProductRepository) {}
+  constructor(
+    private productRepository: IProductRepository,
+    private categoryRepository: ICategoryRepository
+  ) {}
 
   async execute(): Promise<{
     total: number;
@@ -248,13 +271,21 @@ export class GetProductStatsUseCase {
       this.productRepository.count({ status: ProductStatus.OUT_OF_STOCK })
     ]);
 
-    const categoryPromises = Object.values(ProductCategory).map(async (category) => {
-      const count = await this.productRepository.count({ category });
-      return [category, count] as [string, number];
-    });
+    // Get all categories with pagination (get up to 1000 categories)
+    const categoriesResult = await this.categoryRepository.findAll(
+      { page: 1, limit: 1000, sortBy: 'name', sortOrder: 'asc' },
+      {}
+    );
 
-    const categoryResults = await Promise.all(categoryPromises);
-    const byCategory = Object.fromEntries(categoryResults);
+    // Build category stats using the data array from PaginatedResult
+    const byCategoryEntries = await Promise.all(
+      categoriesResult.data.map(async (category) => {
+        const count = await this.productRepository.count({ category: category.id as any });
+        return [category.name, count] as [string, number];
+      })
+    );
+
+    const byCategory = Object.fromEntries(byCategoryEntries);
 
     return { total, active, blocked, outOfStock, byCategory };
   }

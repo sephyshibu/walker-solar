@@ -1,14 +1,14 @@
 import { v4 as uuidv4 } from 'uuid';
 
-export enum ProductCategory {
-  SOLAR_PANELS = 'solar_panels',
-  INVERTERS = 'inverters',
-  BATTERIES = 'batteries',
-  CHARGE_CONTROLLERS = 'charge_controllers',
-  MOUNTING_SYSTEMS = 'mounting_systems',
-  CABLES_CONNECTORS = 'cables_connectors',
-  ACCESSORIES = 'accessories'
-}
+// export enum ProductCategory {
+//   SOLAR_PANELS = 'solar_panels',
+//   INVERTERS = 'inverters',
+//   BATTERIES = 'batteries',
+//   CHARGE_CONTROLLERS = 'charge_controllers',
+//   MOUNTING_SYSTEMS = 'mounting_systems',
+//   CABLES_CONNECTORS = 'cables_connectors',
+//   ACCESSORIES = 'accessories'
+// }
 
 export enum ProductStatus {
   ACTIVE = 'active',
@@ -58,7 +58,7 @@ export interface ProductProps {
   slug?: string;
   description: string;
   shortDescription?: string;
-  category: ProductCategory;
+  category: string;
   price: number;
   discountPrice?: number;
   gstRate?: number; // GST percentage (0, 5, 12, 18, 28)
@@ -125,7 +125,7 @@ export class Product {
     return this.props.shortDescription;
   }
 
-  get category(): ProductCategory {
+  get category(): string {
     return this.props.category;
   }
 

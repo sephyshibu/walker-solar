@@ -15,10 +15,12 @@ import {
   GetProductStatsUseCase
 } from '../../application/use-cases/product/ProductUseCases';
 import { MongoProductRepository } from '../../infrastructure/database/repositories';
-import { ProductCategory, ProductStatus } from '../../domain/entities/Product';
+import { MongoCategoryRepository } from '../../infrastructure/database/repositories/MongoCategoryRepository';
+import { ProductStatus } from '../../domain/entities/Product';
 import { deleteFromCloudinary, extractPublicId } from '../../infrastructure/config/cloudinary';
 
 const productRepository = new MongoProductRepository();
+const categoryRepository = new MongoCategoryRepository();
 
 // Interface for Cloudinary uploaded file
 interface CloudinaryFile extends Express.Multer.File {
@@ -29,7 +31,7 @@ interface CloudinaryFile extends Express.Multer.File {
 export class ProductController {
   static async create(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const useCase = new CreateProductUseCase(productRepository);
+      const useCase = new CreateProductUseCase(productRepository, categoryRepository);
       
       // Handle Cloudinary uploaded images
       let images: string[] = [];
@@ -112,7 +114,7 @@ export class ProductController {
       const sortOrder = (req.query.sortOrder as 'asc' | 'desc') || 'desc';
 
       const filters: any = {};
-      if (req.query.category) filters.category = req.query.category as ProductCategory;
+      if (req.query.category) filters.category = req.query.category as string;
       if (req.query.status) filters.status = req.query.status as ProductStatus;
       if (req.query.isFeatured) filters.isFeatured = req.query.isFeatured === 'true';
       if (req.query.minPrice) filters.minPrice = parseFloat(req.query.minPrice as string);
@@ -156,7 +158,7 @@ export class ProductController {
       const limit = parseInt(req.query.limit as string) || 12;
 
       const result = await useCase.execute(
-        req.params.category as ProductCategory,
+        req.params.category as string,
         { page, limit }
       );
 
@@ -196,7 +198,7 @@ export class ProductController {
 
   static async update(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const useCase = new UpdateProductUseCase(productRepository);
+      const useCase = new UpdateProductUseCase(productRepository, categoryRepository);
       
       // Get existing product to handle image deletion
       const getUseCase = new GetProductByIdUseCase(productRepository);
@@ -379,7 +381,7 @@ export class ProductController {
 
   static async getStats(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const useCase = new GetProductStatsUseCase(productRepository);
+      const useCase = new GetProductStatsUseCase(productRepository, categoryRepository);
       const stats = await useCase.execute();
 
       res.json({
@@ -416,7 +418,7 @@ export class ProductController {
       }
       
       // Update product with new video
-      const updateUseCase = new UpdateProductUseCase(productRepository);
+      const updateUseCase = new UpdateProductUseCase(productRepository, categoryRepository);
       const updatedProduct = await updateUseCase.execute(productId, {
         video: {
           url: cloudinaryFile.path,
@@ -459,7 +461,7 @@ export class ProductController {
       await deleteFromCloudinary(product.video.publicId, 'video');
       
       // Update product to remove video
-      const updateUseCase = new UpdateProductUseCase(productRepository);
+      const updateUseCase = new UpdateProductUseCase(productRepository, categoryRepository);
       const updatedProduct = await updateUseCase.execute(productId, {
         video: undefined
       });

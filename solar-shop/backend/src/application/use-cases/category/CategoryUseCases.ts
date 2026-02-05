@@ -133,8 +133,8 @@ export class DeleteCategoryUseCase {
       throw new AppError('Category not found', 404);
     }
 
-    // Check if any products are using this category
-    const productCount = await this.productRepository.count({ category: category.slug as any });
+    // Check if any products are using this category (by category ID, not slug)
+    const productCount = await this.productRepository.count({ category: category.id as any });
     if (productCount > 0) {
       throw new AppError(
         `Cannot delete category. ${productCount} product(s) are using this category. Please reassign them first.`,
@@ -189,13 +189,14 @@ export class UpdateCategoryProductCountUseCase {
     private productRepository: IProductRepository
   ) {}
 
-  async execute(categorySlug: string): Promise<Category | null> {
-    const category = await this.categoryRepository.findBySlug(categorySlug);
+  async execute(categoryId: string): Promise<Category | null> {
+    const category = await this.categoryRepository.findById(categoryId);
     if (!category) {
       return null;
     }
 
-    const productCount = await this.productRepository.count({ category: categorySlug as any });
+    // Count products by category ID
+    const productCount = await this.productRepository.count({ category: categoryId as any });
     return this.categoryRepository.updateProductCount(category.id, productCount);
   }
 }
