@@ -163,15 +163,31 @@ const AddProduct: React.FC = () => {
   };
 
   // Price tier handlers
-  const handlePriceTierChange = (index: number, field: keyof PriceTier, value: string) => {
-    const updated = [...priceTiers];
-    if (field === 'maxQuantity') {
-      updated[index] = { ...updated[index], [field]: value === '' ? null : parseInt(value) };
-    } else {
-      updated[index] = { ...updated[index], [field]: parseFloat(value) || 0 };
+ // Price tier handlers
+const handlePriceTierChange = (index: number, field: keyof PriceTier, value: string) => {
+  const updated = [...priceTiers];
+
+  if (field === 'price') {
+    updated[index].price = parseFloat(value) || 0;
+  } 
+  else if (field === 'minQuantity') {
+    // Only allow changing min quantity for the very first tier
+    if (index === 0) {
+      updated[index].minQuantity = parseInt(value) || 1;
     }
-    setPriceTiers(updated);
-  };
+  } 
+  else if (field === 'maxQuantity') {
+    const newVal = value === '' ? null : parseInt(value);
+    updated[index].maxQuantity = newVal;
+
+    // AUTOMATION: If we change Max, automatically set the Next Tier's Min to Max + 1
+    if (index < updated.length - 1 && newVal !== null) {
+      updated[index + 1].minQuantity = newVal + 1;
+    }
+  }
+
+  setPriceTiers(updated);
+};
 
   const addPriceTier = () => {
     const lastTier = priceTiers[priceTiers.length - 1];
