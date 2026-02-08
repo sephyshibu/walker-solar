@@ -201,15 +201,16 @@ const handlePriceTierChange = (index: number, field: keyof PriceTier, value: str
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // 1. Standard Validation
     if (!formData.name || !formData.description || !formData.price || !formData.stock || !formData.sku) {
       toast.error('Please fill in all required fields');
       return;
     }
 
-    // Validate discount price
+    // 2. Discount Price Validation
     if (formData.discountPrice) {
       const retailPrice = parseFloat(formData.price);
       const discountPrice = parseFloat(formData.discountPrice);
@@ -217,6 +218,43 @@ const handlePriceTierChange = (index: number, field: keyof PriceTier, value: str
       if (discountPrice >= retailPrice) {
         toast.error('Discount price must be less than retail price');
         return;
+      }
+    }
+
+    // 3. STRICT TIERED PRICING VALIDATION
+    if (enableTieredPricing) {
+      if (priceTiers.length === 0) {
+        toast.error('Please add at least one pricing tier');
+        return;
+      }
+
+      for (let i = 0; i < priceTiers.length; i++) {
+        const tier = priceTiers[i];
+        const tierNum = i + 1;
+
+        // Check A: Price is required
+        if (tier.price === undefined || tier.price <= 0) {
+          toast.error(`Tier ${tierNum}: Please enter a valid price.`);
+          return; 
+        }
+
+        // Check B: Min Quantity is required
+        if (!tier.minQuantity || tier.minQuantity < 1) {
+          toast.error(`Tier ${tierNum}: Please enter a valid Min Quantity.`);
+          return; 
+        }
+
+        // Check C: Max Quantity is NOW MANDATORY for ALL tiers
+        if (!tier.maxQuantity) {
+          toast.error(`Tier ${tierNum}: Max Quantity is required.`);
+          return; 
+        }
+
+        // Check D: Logic (Max > Min)
+        if (tier.maxQuantity <= tier.minQuantity) {
+          toast.error(`Tier ${tierNum}: Max Quantity must be greater than Min Quantity.`);
+          return; 
+        }
       }
     }
 
@@ -229,10 +267,7 @@ const handlePriceTierChange = (index: number, field: keyof PriceTier, value: str
       submitData.append('name', formData.name);
       submitData.append('description', formData.description);
       submitData.append('shortDescription', formData.shortDescription);
-      
-      // CRITICAL: This now sends the ID, not the slug/name
       submitData.append('category', formData.category);
-      
       submitData.append('price', formData.price);
       if (formData.discountPrice) submitData.append('discountPrice', formData.discountPrice);
       submitData.append('gstRate', formData.gstRate);
@@ -249,9 +284,9 @@ const handlePriceTierChange = (index: number, field: keyof PriceTier, value: str
       const validFeatures = features.filter(f => f.trim());
       submitData.append('features', JSON.stringify(validFeatures));
 
+      // Append Tiers
       if (enableTieredPricing) {
-        const validTiers = priceTiers.filter(t => t.minQuantity > 0 && t.price > 0);
-        submitData.append('priceTiers', JSON.stringify(validTiers));
+        submitData.append('priceTiers', JSON.stringify(priceTiers));
       }
 
       // Append Images
@@ -485,8 +520,9 @@ const handlePriceTierChange = (index: number, field: keyof PriceTier, value: str
                           className="form-input tier-input"
                           value={tier.maxQuantity || ''}
                           onChange={(e) => handlePriceTierChange(index, 'maxQuantity', e.target.value)}
-                          placeholder="No limit"
+                          placeholder="Max" // <--- CHANGED from "No Limit" to "Max"
                           min={tier.minQuantity}
+                          required // <--- Added HTML5 required attribute for visual cues
                         />
                         <input
                           type="number"

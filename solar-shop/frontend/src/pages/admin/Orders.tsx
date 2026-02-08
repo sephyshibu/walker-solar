@@ -214,36 +214,51 @@ const getAvailableStatuses = (currentStatus: string) => {
               <tr>
                 <th>Order</th>
                 <th>Customer</th>
+                <th>Customer Number</th>
+                <th>Shipping Address</th>
                 <th>Items</th>
                 <th>Total</th>
                 <th>Status</th>
                 <th>Tracking</th>
                 <th>Invoice</th>
-                <th>Date</th>
+              
               </tr>
             </thead>
             <tbody>
               {orders.map((order) => (
-                <tr key={order.id}>
-                  <td><strong>{order.orderNumber}</strong></td>
-                  <td>{order.userName}<br/><small>{order.userEmail}</small></td>
-                  <td>{order.totalItems}</td>
-                  <td>{formatPrice(order.totalAmount)}</td>
-                  <td>
-                    <select 
-                      value={order.status} 
-                    onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                    className="form-input"
-                    style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
-                    disabled={order.status === 'cancelled' || order.status === 'delivered'}
-                  >
-                    {getAvailableStatuses(order.status).map((status) => (
-                      <option key={status.value} value={status.value}>
-                        {status.label}
-                      </option>
-                    ))}
-                  </select>
-                  </td>
+<tr key={order.id}>
+  {/* 1. Existing Order Number Code */}
+  <td><strong>{order.orderNumber}</strong><br/><small>{new Date(order.createdAt).toLocaleDateString()}</small></td>
+  
+  {/* 2. Existing Customer Name Code */}
+  <td>{order.userName}<br/><small>{order.userEmail}</small></td>
+  
+  {/* 3. FIX: Add style={{ whiteSpace: 'nowrap' }} to keep phone number on one line */}
+  <td style={{ whiteSpace: 'nowrap' }}>{order.shippingAddress.phone}</td>
+  
+  {/* 4. Existing Address Code */}
+  <td>{order.shippingAddress.street}, {order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.zipCode}</td>
+  
+  {/* 5. Existing Items & Total Code */}
+  <td>{order.totalItems}</td>
+  <td>{formatPrice(order.totalAmount)}</td>
+  
+  {/* 6. FIX: Remove the inline 'style' prop from select to restore normal size */}
+  <td>
+    <select 
+      value={order.status} 
+      onChange={(e) => handleStatusChange(order.id, e.target.value)}
+      className="form-input status-select" // Added a class 'status-select' for specific styling if needed
+      // REMOVED THE INLINE STYLE HERE
+      disabled={order.status === 'cancelled' || order.status === 'delivered'}
+    >
+      {getAvailableStatuses(order.status).map((status) => (
+        <option key={status.value} value={status.value}>
+          {status.label}
+        </option>
+      ))}
+    </select>
+  </td>
                   <td>
                     {order.tracking ? (
                       <div className="tracking-info-cell">
@@ -312,7 +327,7 @@ const getAvailableStatuses = (currentStatus: string) => {
                       <span className="invoice-na">-</span>
                     )}
                   </td>
-                  <td>{new Date(order.createdAt).toLocaleDateString()}</td>
+                  {/* <td>{new Date(order.createdAt).toLocaleDateString()}</td> */}
                 </tr>
               ))}
             </tbody>

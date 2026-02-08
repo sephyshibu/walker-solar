@@ -59,7 +59,6 @@ const Products: React.FC = () => {
             <thead>
               <tr>
                 <th>Product</th>
-                <th>Category</th>
                 <th>Price</th>
                 <th>Stock</th>
                 <th>Status</th>
@@ -70,7 +69,6 @@ const Products: React.FC = () => {
               {products.map((product) => (
                 <tr key={product.id}>
                   <td><strong>{product.name}</strong><br/><small>{product.sku}</small></td>
-                  <td>{product.category.replace(/_/g, ' ')}</td>
                   <td>{formatPrice(product.discountPrice || product.price)}</td>
                   <td>{product.stock}</td>
                   <td><span className={`badge badge-${product.status === 'active' ? 'success' : 'error'}`}>{product.status}</span></td>

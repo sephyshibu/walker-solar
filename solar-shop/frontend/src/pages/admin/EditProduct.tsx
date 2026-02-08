@@ -6,21 +6,14 @@ import { Product } from '../../types';
 import toast from 'react-hot-toast';
 import './Admin.css';
 import './AddProduct.css';
+
 interface CategoryOption {
   id: string;
   name: string;
   slug: string;
 }
-const categories = [
-  { value: 'solar_panels', label: 'Solar Panels' },
-  { value: 'inverters', label: 'Inverters' },
-  { value: 'batteries', label: 'Batteries' },
-  { value: 'charge_controllers', label: 'Charge Controllers' },
-  { value: 'mounting_systems', label: 'Mounting Systems' },
-  { value: 'cables_connectors', label: 'Cables & Connectors' },
-  { value: 'accessories', label: 'Accessories' },
-];
 
+// Keep static options or fetch if needed
 const gstRateOptions = [
   { value: 0, label: 'No GST (0%)' },
   { value: 5, label: 'GST 5%' },
@@ -48,7 +41,8 @@ const EditProduct: React.FC = () => {
   const [fetching, setFetching] = useState(true);
   const [product, setProduct] = useState<Product | null>(null);
   const [categories, setCategories] = useState<CategoryOption[]>([]);
-const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  
   // New images to upload
   const [newImages, setNewImages] = useState<File[]>([]);
   const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
@@ -61,7 +55,7 @@ const [categoriesLoading, setCategoriesLoading] = useState(true);
     name: '',
     description: '',
     shortDescription: '',
-    category: 'solar_panels',
+    category: '', // Will be set after fetch
     price: '',
     discountPrice: '',
     gstRate: '18',
@@ -88,28 +82,29 @@ const [categoriesLoading, setCategoriesLoading] = useState(true);
 
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-  // Fetch product data on mount
+  // Fetch categories on mount
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const response = await categoryApi.getActive();
+        setCategories(response.data.data);
+      } catch (error) {
+        console.error('Failed to load categories:', error);
+        toast.error('Failed to load categories');
+      } finally {
+        setCategoriesLoading(false);
+      }
+    };
+    loadCategories();
+  }, []);
+
+  // Fetch product data on mount (depend on id)
   useEffect(() => {
     if (id) {
       fetchProduct();
     }
+ 
   }, [id]);
-
-  // Fetch categories on mount
-useEffect(() => {
-  const loadCategories = async () => {
-    try {
-      const response = await categoryApi.getActive();
-      setCategories(response.data.data);
-    } catch (error) {
-      console.error('Failed to load categories:', error);
-      toast.error('Failed to load categories');
-    } finally {
-      setCategoriesLoading(false);
-    }
-  };
-  loadCategories();
-}, []);
 
   const fetchProduct = async () => {
     try {
@@ -166,24 +161,23 @@ useEffect(() => {
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-  const { name, value, type } = e.target;
-  if (type === 'checkbox') {
-    setFormData({ ...formData, [name]: (e.target as HTMLInputElement).checked });
-  } else {
-    setFormData({ ...formData, [name]: value });
-  }
-};
+    const { name, value, type } = e.target;
+    if (type === 'checkbox') {
+      setFormData({ ...formData, [name]: (e.target as HTMLInputElement).checked });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
+  };
 
-// Add this new function to handle stock changes with auto status update
-const handleStockChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  const newStock = parseInt(e.target.value) || 0;
-  setFormData({ ...formData, stock: e.target.value });
-  
-  // Auto-convert out_of_stock to active when stock > 0
-  if (product && product.status === 'out_of_stock' && newStock > 0) {
-    toast.success('Stock added! Product will be set to active.');
-  }
-};
+  const handleStockChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newStock = parseInt(e.target.value) || 0;
+    setFormData({ ...formData, stock: e.target.value });
+    
+    // Auto-convert out_of_stock to active when stock > 0
+    if (product && product.status === 'out_of_stock' && newStock > 0) {
+      toast.success('Stock added! Product will be set to active.');
+    }
+  };
 
   const handleNewImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -248,49 +242,125 @@ const handleStockChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     }
   };
 
-  // Price tier handlers
+  // ------------------------------------------------------------------
+  //  UPDATED PRICE TIER HANDLERS (STRICT LOGIC)
+  // ------------------------------------------------------------------
   const handlePriceTierChange = (index: number, field: keyof PriceTier, value: string) => {
     const updated = [...priceTiers];
-    if (field === 'maxQuantity') {
-      updated[index] = { ...updated[index], [field]: value === '' ? null : parseInt(value) };
-    } else {
-      updated[index] = { ...updated[index], [field]: parseFloat(value) || 0 };
+
+    if (field === 'price') {
+      updated[index].price = parseFloat(value) || 0;
+    } 
+    else if (field === 'minQuantity') {
+      // Only allow changing min quantity for the very first tier manually
+      if (index === 0) {
+        updated[index].minQuantity = parseInt(value) || 1;
+      }
+    } 
+    else if (field === 'maxQuantity') {
+      const newVal = value === '' ? null : parseInt(value);
+      updated[index].maxQuantity = newVal;
+
+      // AUTOMATION: If we change Max, automatically set the Next Tier's Min to Max + 1
+      if (index < updated.length - 1 && newVal !== null) {
+        updated[index + 1].minQuantity = newVal + 1;
+      }
     }
+
     setPriceTiers(updated);
   };
 
   const addPriceTier = () => {
     const lastTier = priceTiers[priceTiers.length - 1];
-    const newMin = lastTier ? (lastTier.maxQuantity || lastTier.minQuantity) + 1 : 1;
+    
+    // STRICT: Cannot add new tier if last tier is unlimited (null)
+    if (lastTier && (lastTier.maxQuantity === null || lastTier.maxQuantity === undefined)) {
+      toast.error('Please set a Max Quantity for the last tier before adding a new one.');
+      return;
+    }
+
+    const newMin = lastTier ? (lastTier.maxQuantity || 0) + 1 : 1;
     setPriceTiers([...priceTiers, { minQuantity: newMin, maxQuantity: null, price: 0 }]);
   };
 
   const removePriceTier = (index: number) => {
     if (priceTiers.length > 1) {
-      setPriceTiers(priceTiers.filter((_, i) => i !== index));
+      const updated = priceTiers.filter((_, i) => i !== index);
+      
+      // Re-calculate the chain to ensure no gaps if a middle tier was deleted
+      for (let i = 1; i < updated.length; i++) {
+        const prevTier = updated[i-1];
+        if (prevTier.maxQuantity !== null && prevTier.maxQuantity !== undefined) {
+          updated[i].minQuantity = prevTier.maxQuantity + 1;
+        }
+      }
+      
+      setPriceTiers(updated);
     }
   };
 
+  // ------------------------------------------------------------------
+  //  UPDATED SUBMIT LOGIC (STRICT VALIDATION)
+  // ------------------------------------------------------------------
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-     if (!formData.name || !formData.description || !formData.price || !formData.stock || !formData.sku) {
-    toast.error('Please fill in all required fields');
-    return;
-  }
-
-  // Validate discount price must be less than retail price
-  if (formData.discountPrice) {
-    const retailPrice = parseFloat(formData.price);
-    const discountPrice = parseFloat(formData.discountPrice);
-    
-    if (discountPrice >= retailPrice) {
-      toast.error('Discount price must be less than retail price');
+    // 1. Standard Validation
+    if (!formData.name || !formData.description || !formData.price || !formData.stock || !formData.sku) {
+      toast.error('Please fill in all required fields');
       return;
     }
-  }
 
-  setLoading(true);
+    // 2. Discount Price Validation
+    if (formData.discountPrice) {
+      const retailPrice = parseFloat(formData.price);
+      const discountPrice = parseFloat(formData.discountPrice);
+      
+      if (discountPrice >= retailPrice) {
+        toast.error('Discount price must be less than retail price');
+        return;
+      }
+    }
+
+    // 3. STRICT TIERED PRICING VALIDATION
+    if (enableTieredPricing) {
+      if (priceTiers.length === 0) {
+        toast.error('Please add at least one pricing tier');
+        return;
+      }
+
+      for (let i = 0; i < priceTiers.length; i++) {
+        const tier = priceTiers[i];
+        const tierNum = i + 1;
+
+        // Check A: Price is required
+        if (tier.price === undefined || tier.price <= 0) {
+          toast.error(`Tier ${tierNum}: Please enter a valid price.`);
+          return; 
+        }
+
+        // Check B: Min Quantity is required
+        if (!tier.minQuantity || tier.minQuantity < 1) {
+          toast.error(`Tier ${tierNum}: Please enter a valid Min Quantity.`);
+          return; 
+        }
+
+        // Check C: Max Quantity is NOW MANDATORY for ALL tiers
+        if (!tier.maxQuantity) {
+          toast.error(`Tier ${tierNum}: Max Quantity is required.`);
+          return; 
+        }
+
+        // Check D: Logic (Max > Min)
+        if (tier.maxQuantity <= tier.minQuantity) {
+          toast.error(`Tier ${tierNum}: Max Quantity must be greater than Min Quantity.`);
+          return; 
+        }
+      }
+    }
+
+    setLoading(true);
+
     try {
       const submitData = new FormData();
       
@@ -301,10 +371,10 @@ const handleStockChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       submitData.append('category', formData.category);
       submitData.append('price', formData.price);
       if (formData.discountPrice) {
-      submitData.append('discountPrice', formData.discountPrice);
-    } else {
-      submitData.append('discountPrice', ''); // Clear discount price if empty
-    }
+        submitData.append('discountPrice', formData.discountPrice);
+      } else {
+        submitData.append('discountPrice', ''); // Clear discount price if empty
+      }
       submitData.append('gstRate', formData.gstRate);
       submitData.append('stock', formData.stock);
       submitData.append('sku', formData.sku.toUpperCase());
@@ -313,9 +383,10 @@ const handleStockChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       submitData.append('isFeatured', String(formData.isFeatured));
       
       const newStock = parseInt(formData.stock) || 0;
-    if (product && product.status === 'out_of_stock' && newStock > 0) {
-      submitData.append('status', 'active');
-    }
+      if (product && product.status === 'out_of_stock' && newStock > 0) {
+        submitData.append('status', 'active');
+      }
+
       // Add specifications (filter empty ones)
       const validSpecs = specifications.filter(s => s.key && s.value);
       submitData.append('specifications', JSON.stringify(validSpecs));
@@ -415,23 +486,23 @@ const handleStockChange = (e: React.ChangeEvent<HTMLInputElement>) => {
               <div className="form-group">
                 <label className="form-label">Category *</label>
                 <select
-                name="category"
-                className="form-input"
-                value={formData.category}
-                onChange={handleChange}
-                required
-                disabled={categoriesLoading}
-              >
-                {categoriesLoading ? (
-                  <option value="">Loading categories...</option>
-                ) : categories.length === 0 ? (
-                  <option value="">No categories available</option>
-                ) : (
-                  categories.map(cat => (
-                    <option key={cat.slug} value={cat.slug}>{cat.name}</option>
-                  ))
-                )}
-              </select>
+                  name="category"
+                  className="form-input"
+                  value={formData.category}
+                  onChange={handleChange}
+                  required
+                  disabled={categoriesLoading}
+                >
+                  {categoriesLoading ? (
+                    <option value="">Loading categories...</option>
+                  ) : categories.length === 0 ? (
+                    <option value="">No categories available</option>
+                  ) : (
+                    categories.map(cat => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))
+                  )}
+                </select>
               </div>
               <div className="form-group">
                 <label className="form-label">SKU *</label>
@@ -505,8 +576,8 @@ const handleStockChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                   step="0.01"
                 />
                 {formData.discountPrice && formData.price && parseFloat(formData.discountPrice) >= parseFloat(formData.price) && (
-    <small className="error-text">Discount price must be less than retail price</small>
-  )}
+                  <small className="error-text">Discount price must be less than retail price</small>
+                )}
               </div>
               <div className="form-group">
                 <label className="form-label">GST Rate *</label>
@@ -530,18 +601,18 @@ const handleStockChange = (e: React.ChangeEvent<HTMLInputElement>) => {
               <div className="form-group">
                 <label className="form-label">Stock Quantity *</label>
                  <input
-                type="number"
-                name="stock"
-                className="form-input"
-                value={formData.stock}
-                onChange={handleStockChange}
-                placeholder="Available quantity"
-                min="0"
-                required
-              />
-              {product && product.status === 'out_of_stock' && parseInt(formData.stock) > 0 && (
-                <small className="success-text">✓ Product will be set to active after save</small>
-              )}
+                  type="number"
+                  name="stock"
+                  className="form-input"
+                  value={formData.stock}
+                  onChange={handleStockChange}
+                  placeholder="Available quantity"
+                  min="0"
+                  required
+                />
+                {product && product.status === 'out_of_stock' && parseInt(formData.stock) > 0 && (
+                  <small className="success-text">✓ Product will be set to active after save</small>
+                )}
               </div>
             </div>
 
@@ -586,6 +657,7 @@ const handleStockChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 
                     return (
                       <div key={index} className="tier-row">
+                        {/* MIN QUANTITY - Disabled for all except the first row */}
                         <input
                           type="number"
                           className="form-input tier-input"
@@ -593,15 +665,22 @@ const handleStockChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                           onChange={(e) => handlePriceTierChange(index, 'minQuantity', e.target.value)}
                           placeholder="Min"
                           min="1"
+                          disabled={index > 0} 
+                          style={index > 0 ? { backgroundColor: '#f3f4f6', cursor: 'not-allowed' } : {}}
                         />
+
+                        {/* MAX QUANTITY - Required for ALL rows now */}
                         <input
                           type="number"
                           className="form-input tier-input"
                           value={tier.maxQuantity ?? ''}
                           onChange={(e) => handlePriceTierChange(index, 'maxQuantity', e.target.value)}
-                          placeholder="∞"
-                          min="1"
+                          placeholder="Max"
+                          min={tier.minQuantity}
+                          required
                         />
+
+                        {/* PRICE */}
                         <input
                           type="number"
                           className="form-input tier-input"
@@ -632,19 +711,19 @@ const handleStockChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                 </button>
 
                 {/* Preview */}
-                {formData.price && (
+                {formData.price && priceTiers.length > 0 && priceTiers[0].price > 0 && (
                   <div className="tier-preview">
                     <h4>Price Preview:</h4>
                     <ul>
                       <li>
-                        <span>1-{priceTiers[0]?.minQuantity - 1 || 9} units:</span>
+                        <span>1-{priceTiers[0].minQuantity - 1} units:</span>
                         <strong>₹{parseFloat(formData.discountPrice || formData.price).toLocaleString()}</strong>
                         <em>(Base price)</em>
                       </li>
-                      {priceTiers.filter(t => t.price > 0).map((tier, index) => (
+                      {priceTiers.filter(t => t.price > 0 && t.maxQuantity).map((tier, index) => (
                         <li key={index}>
                           <span>
-                            {tier.minQuantity}-{tier.maxQuantity || '∞'} units:
+                            {tier.minQuantity}-{tier.maxQuantity} units:
                           </span>
                           <strong>₹{tier.price.toLocaleString()}</strong>
                           {tier.price < parseFloat(formData.discountPrice || formData.price) && (
