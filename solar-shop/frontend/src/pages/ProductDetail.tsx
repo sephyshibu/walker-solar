@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { FiHeart, FiShoppingCart, FiMinus, FiPlus, FiCheck, FiShare2, FiPercent, FiTag } from 'react-icons/fi';
 import { Product, getPriceForQuantity, getSavingsPercentage } from '../types';
-import { productApi } from '../services/api';
+import { productApi, categoryApi } from '../services/api';
 import { useAuthStore, useCartStore, useWishlistStore } from '../store';
 import toast from 'react-hot-toast';
 import './ProductDetail.css';
@@ -12,11 +12,13 @@ const ProductDetail: React.FC = () => {
   const { isAuthenticated } = useAuthStore();
   const { addToCart } = useCartStore();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlistStore();
-  
+
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
+  const [categoryName, setCategoryName] = useState<string>('');
+  const [categorySlug, setCategorySlug] = useState<string>('');
 
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -26,25 +28,45 @@ const ProductDetail: React.FC = () => {
     }
   }, [slug]);
 
+  // Fetch category name when product is loaded
+  useEffect(() => {
+    if (product && product.category) {
+      const loadCategory = async () => {
+        try {
+          const response = await categoryApi.getActive();
+          const categories = response.data.data;
+          const cat = categories.find((c: any) => c.id === product.category || c._id === product.category);
+          if (cat) {
+            setCategoryName(cat.name);
+            setCategorySlug(cat.slug);
+          }
+        } catch (error) {
+          console.error('Failed to load category:', error);
+        }
+      };
+      loadCategory();
+    }
+  }, [product]);
+
   const loadProduct = async () => {
     setLoading(true);
     try {
-       const isObjectId = /^[a-f\d]{24}$/i.test(slug!);
-    
-    let response;
-    if (isObjectId) {
-      // If it's an ID, use getById
-      response = await productApi.getById(slug!);
-    } else {
-      // Otherwise use getBySlug
-      response = await productApi.getBySlug(slug!);
+      const isObjectId = /^[a-f\d]{24}$/i.test(slug!);
+
+      let response;
+      if (isObjectId) {
+        // If it's an ID, use getById
+        response = await productApi.getById(slug!);
+      } else {
+        // Otherwise use getBySlug
+        response = await productApi.getBySlug(slug!);
+      }
+      setProduct(response.data.data);
+    } catch (error) {
+      console.error('Failed to load product:', error);
+    } finally {
+      setLoading(false);
     }
-    setProduct(response.data.data);
-  } catch (error) {
-    console.error('Failed to load product:', error);
-  } finally {
-    setLoading(false);
-  }
   };
 
   const formatPrice = (price: number) => {
@@ -152,7 +174,7 @@ const ProductDetail: React.FC = () => {
   }
 
   const inWishlist = isInWishlist(product.id);
-  const discountPercentage = product.discountPrice 
+  const discountPercentage = product.discountPrice
     ? Math.round(((product.price - product.discountPrice) / product.price) * 100)
     : 0;
 
@@ -164,8 +186,8 @@ const ProductDetail: React.FC = () => {
           <span>/</span>
           <Link to="/products">Products</Link>
           <span>/</span>
-          <Link to={`/products?category=${product.category}`}>
-            {product.category.replace(/_/g, ' ')}
+          <Link to={`/products?category=${categorySlug || product.category}`}>
+            {categoryName || product.category.replace(/_/g, ' ')}
           </Link>
           <span>/</span>
           <span>{product.name}</span>
@@ -174,9 +196,9 @@ const ProductDetail: React.FC = () => {
         <div className="product-layout">
           <div className="product-gallery">
             <div className="main-image">
-              <img 
-                src={product.images[selectedImage] ? getImageUrl(product.images[selectedImage]) : '/placeholder-product.jpg'} 
-                alt={product.name} 
+              <img
+                src={product.images[selectedImage] ? getImageUrl(product.images[selectedImage]) : '/placeholder-product.jpg'}
+                alt={product.name}
               />
               {discountPercentage > 0 && (
                 <span className="discount-badge">-{discountPercentage}%</span>
@@ -198,11 +220,11 @@ const ProductDetail: React.FC = () => {
           </div>
 
           <div className="product-info">
-            <span className="category-badge">{product.category.replace(/_/g, ' ')}</span>
+            <span className="category-badge">{categoryName || product.category.replace(/_/g, ' ')}</span>
             <h1>{product.name}</h1>
-            
+
             {product.brand && <p className="brand">By {product.brand}</p>}
-            
+
             {/* Price Section with Tiered Pricing */}
             <div className="price-section">
               <div className="price-main">
@@ -219,7 +241,7 @@ const ProductDetail: React.FC = () => {
                   </span>
                 )}
               </div>
-              
+
               {/* Show per-unit and total price */}
               {quantity > 1 && (
                 <div className="price-total">
@@ -252,12 +274,12 @@ const ProductDetail: React.FC = () => {
                     </tr>
                     {product.priceTiers!.map((tier, index) => {
                       const savings = Math.round(((basePrice - tier.price) / basePrice) * 100);
-                      const isActive = quantity >= tier.minQuantity && 
+                      const isActive = quantity >= tier.minQuantity &&
                         (tier.maxQuantity === null || quantity <= tier.maxQuantity);
-                      
+
                       return (
-                        <tr 
-                          key={index} 
+                        <tr
+                          key={index}
                           className={isActive ? 'active-tier' : ''}
                           onClick={() => setQuantity(tier.minQuantity)}
                           style={{ cursor: 'pointer' }}
@@ -292,7 +314,7 @@ const ProductDetail: React.FC = () => {
               <div className="quantity-section">
                 <label>Quantity:</label>
                 <div className="quantity-control">
-                  <button 
+                  <button
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
                     disabled={quantity <= 1}
                   >
@@ -308,14 +330,14 @@ const ProductDetail: React.FC = () => {
                     min="1"
                     max={product.stock}
                   />
-                  <button 
+                  <button
                     onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
                     disabled={quantity >= product.stock}
                   >
                     <FiPlus />
                   </button>
                 </div>
-                
+
                 {/* Quick quantity buttons for bulk orders */}
                 {hasTieredPricing && (
                   <div className="quick-quantities">
@@ -334,7 +356,7 @@ const ProductDetail: React.FC = () => {
             )}
 
             <div className="action-buttons">
-              <button 
+              <button
                 className="btn btn-primary btn-lg add-to-cart"
                 onClick={handleAddToCart}
                 disabled={product.stock === 0}
@@ -342,7 +364,7 @@ const ProductDetail: React.FC = () => {
                 <FiShoppingCart />
                 {product.stock === 0 ? 'Out of Stock' : `Add to Cart${quantity > 1 ? ` (${quantity})` : ''}`}
               </button>
-              <button 
+              <button
                 className={`btn btn-secondary btn-lg wishlist-btn ${inWishlist ? 'active' : ''}`}
                 onClick={handleToggleWishlist}
               >
@@ -368,32 +390,34 @@ const ProductDetail: React.FC = () => {
             <p>{product.description}</p>
           </div>
 
-          {product.specifications.length > 0 && (
-            <div className="tab-content">
-              <h3>Specifications</h3>
-              <table className="specs-table">
-                <tbody>
-                  {product.specifications.map((spec, index) => (
-                    <tr key={index}>
-                      <td>{spec.key}</td>
-                      <td>{spec.value} {spec.unit}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+          <div className="product-tabs-right">
+            {product.specifications.length > 0 && (
+              <div className="tab-content">
+                <h3>Specifications</h3>
+                <table className="specs-table">
+                  <tbody>
+                    {product.specifications.map((spec, index) => (
+                      <tr key={index}>
+                        <td>{spec.key}</td>
+                        <td>{spec.value} {spec.unit}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
-          {product.features.length > 0 && (
-            <div className="tab-content">
-              <h3>Features</h3>
-              <ul className="features-list">
-                {product.features.map((feature, index) => (
-                  <li key={index}><FiCheck /> {feature}</li>
-                ))}
-              </ul>
-            </div>
-          )}
+            {product.features.length > 0 && (
+              <div className="tab-content">
+                <h3>Features</h3>
+                <ul className="features-list">
+                  {product.features.map((feature, index) => (
+                    <li key={index}><FiCheck /> {feature}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -1,0 +1,339 @@
+/* ========================================
+   IMAGE CROP MODAL
+   ======================================== */
+
+.image-crop-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: cropFadeIn 0.2s ease-out;
+}
+
+@keyframes cropFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.image-crop-modal {
+  background: var(--bg-card, #1a1a1e);
+  border: 1px solid var(--border-color, #333);
+  border-radius: 16px;
+  max-width: 700px;
+  width: 100%;
+  max-height: 95vh;
+  overflow-y: auto;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+  animation: cropSlideUp 0.25s ease-out;
+}
+
+@keyframes cropSlideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Header */
+.crop-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border-color, #333);
+}
+
+.crop-modal-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+}
+
+.crop-modal-title svg {
+  color: var(--color-primary, #f59e0b);
+  font-size: 1.25rem;
+}
+
+.crop-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--bg-tertiary, #2a2a2e);
+  border: 1px solid var(--border-color, #333);
+  border-radius: 8px;
+  color: var(--text-secondary, #888);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.crop-close-btn:hover {
+  background: var(--color-error, #ef4444);
+  border-color: var(--color-error, #ef4444);
+  color: #fff;
+}
+
+/* Crop Area */
+.crop-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.25rem;
+  gap: 0.75rem;
+  background: #0e0e10;
+}
+
+.crop-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted, #666);
+  letter-spacing: 0.3px;
+}
+
+.crop-canvas-wrapper {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.3);
+}
+
+.crop-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  user-select: none;
+}
+
+/* Crop Frame Overlay (purely visual guides) */
+.crop-frame-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Corner brackets */
+.crop-corner {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-color: rgba(245, 158, 11, 0.8);
+  border-style: solid;
+  border-width: 0;
+}
+
+.crop-corner.tl {
+  top: 0; left: 0;
+  border-top-width: 3px;
+  border-left-width: 3px;
+  border-top-left-radius: 4px;
+}
+
+.crop-corner.tr {
+  top: 0; right: 0;
+  border-top-width: 3px;
+  border-right-width: 3px;
+  border-top-right-radius: 4px;
+}
+
+.crop-corner.bl {
+  bottom: 0; left: 0;
+  border-bottom-width: 3px;
+  border-left-width: 3px;
+  border-bottom-left-radius: 4px;
+}
+
+.crop-corner.br {
+  bottom: 0; right: 0;
+  border-bottom-width: 3px;
+  border-right-width: 3px;
+  border-bottom-right-radius: 4px;
+}
+
+/* Rule of thirds grid */
+.crop-grid-h1,
+.crop-grid-h2,
+.crop-grid-v1,
+.crop-grid-v2 {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.crop-grid-h1 {
+  top: 33.33%;
+  left: 0;
+  right: 0;
+  height: 1px;
+}
+
+.crop-grid-h2 {
+  top: 66.66%;
+  left: 0;
+  right: 0;
+  height: 1px;
+}
+
+.crop-grid-v1 {
+  left: 33.33%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+}
+
+.crop-grid-v2 {
+  left: 66.66%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+}
+
+.crop-aspect-label {
+  font-size: 0.7rem;
+  color: var(--text-muted, #555);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Controls */
+.crop-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.25rem;
+  border-top: 1px solid var(--border-color, #222);
+  border-bottom: 1px solid var(--border-color, #222);
+  background: var(--bg-secondary, #141416);
+}
+
+.crop-controls-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.crop-ctrl-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--bg-tertiary, #2a2a2e);
+  border: 1px solid var(--border-color, #333);
+  border-radius: 8px;
+  color: var(--text-secondary, #aaa);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 1rem;
+}
+
+.crop-ctrl-btn:hover {
+  background: var(--color-primary, #f59e0b);
+  border-color: var(--color-primary, #f59e0b);
+  color: #000;
+}
+
+.crop-ctrl-btn.reset-btn {
+  width: auto;
+  padding: 0 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.crop-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--border-color, #333);
+  margin: 0 0.25rem;
+}
+
+/* Zoom Slider */
+.zoom-slider-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.zoom-slider {
+  width: 120px;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--bg-tertiary, #2a2a2e);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.zoom-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-primary, #f59e0b);
+  cursor: pointer;
+  border: 2px solid #000;
+  transition: transform 0.15s;
+}
+
+.zoom-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.zoom-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-primary, #f59e0b);
+  cursor: pointer;
+  border: 2px solid #000;
+}
+
+.zoom-value {
+  font-size: 0.7rem;
+  font-family: 'Space Grotesk', monospace;
+  color: var(--text-muted, #666);
+  min-width: 36px;
+  text-align: center;
+}
+
+/* Footer */
+.crop-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+}
+
+.crop-modal-footer .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .image-crop-modal {
+    max-width: 100%;
+    border-radius: 12px;
+  }
+
+  .crop-area {
+    padding: 0.75rem;
+  }
+
+  .zoom-slider {
+    width: 80px;
+  }
+
+  .crop-controls-left {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}

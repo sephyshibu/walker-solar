@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FiSave, FiPlus, FiTrash2, FiUpload, FiArrowLeft, FiDollarSign } from 'react-icons/fi';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { FiSave, FiPlus, FiTrash2, FiUpload, FiArrowLeft, FiDollarSign, FiMove, FiCopy, FiAlertCircle } from 'react-icons/fi';
 import { productApi, categoryApi } from '../../services/api';
+import { Product } from '../../types';
 import toast from 'react-hot-toast';
+import ImageCropModal from './imageCropModal';
 import './Admin.css';
 import './AddProduct.css';
+import './DraggableImages.css';
+import './Duplicatemode.css';
 
 interface Category {
   id: string; // Ensure your backend sends 'id' or '_id'
@@ -35,9 +39,28 @@ interface PriceTier {
 
 const AddProduct: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [loading, setLoading] = useState(false);
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  
+  // Copy listing mode
+  const searchParams = new URLSearchParams(location.search);
+  const copyFromId = searchParams.get('copyFrom');
+  const [isCopyMode, setIsCopyMode] = useState(false);
+  const [copyLoading, setCopyLoading] = useState(false);
+  const [nameChanged, setNameChanged] = useState(false);
+  const [skuChanged, setSkuChanged] = useState(false);
+  const [originalName, setOriginalName] = useState('');
+  const [originalSku, setOriginalSku] = useState('');
+
+  // Image crop state
+  const [cropQueue, setCropQueue] = useState<File[]>([]);
+  const [currentCropFile, setCurrentCropFile] = useState<File | null>(null);
+
+  // Drag reorder state
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   
   // Categories state
   const [categories, setCategories] = useState<Category[]>([]);
@@ -97,12 +120,75 @@ const AddProduct: React.FC = () => {
     loadCategories();
   }, []);
 
+  // Load product data when in copy mode
+  useEffect(() => {
+    if (copyFromId) {
+      loadCopyProduct();
+    }
+  }, [copyFromId]);
+
+  const loadCopyProduct = async () => {
+    if (!copyFromId) return;
+    setCopyLoading(true);
+    try {
+      const response = await productApi.getById(copyFromId);
+      const p: Product = response.data.data;
+      
+      setIsCopyMode(true);
+      setOriginalName(p.name);
+      setOriginalSku(p.sku);
+
+      setFormData({
+        name: `${p.name} (Copy)`,
+        description: p.description,
+        shortDescription: p.shortDescription || '',
+        category: p.category,
+        price: p.price.toString(),
+        discountPrice: p.discountPrice?.toString() || '',
+        gstRate: (p.gstRate ?? 18).toString(),
+        stock: p.stock.toString(),
+        sku: '',
+        brand: p.brand || '',
+        warranty: p.warranty || '',
+        isFeatured: p.isFeatured,
+      });
+
+      if (p.specifications && p.specifications.length > 0) {
+        setSpecifications(p.specifications);
+      }
+      if (p.features && p.features.length > 0) {
+        setFeatures(p.features);
+      }
+      if (p.priceTiers && p.priceTiers.length > 0) {
+        setEnableTieredPricing(true);
+        setPriceTiers(p.priceTiers);
+      }
+
+      toast.success(`Product data loaded from "${p.name}". Change the Name and SKU before saving.`);
+    } catch (error) {
+      console.error('Failed to load source product:', error);
+      toast.error('Failed to load product for copying');
+    } finally {
+      setCopyLoading(false);
+    }
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     if (type === 'checkbox') {
       setFormData({ ...formData, [name]: (e.target as HTMLInputElement).checked });
     } else {
       setFormData({ ...formData, [name]: value });
+    }
+
+    // Track name/SKU changes in copy mode
+    if (isCopyMode) {
+      if (name === 'name') {
+        setNameChanged(value.trim() !== '' && value.trim() !== `${originalName} (Copy)` && value.trim() !== originalName);
+      }
+      if (name === 'sku') {
+        setSkuChanged(value.trim() !== '' && value.trim().toUpperCase() !== originalSku.toUpperCase());
+      }
     }
   };
 
@@ -112,17 +198,48 @@ const AddProduct: React.FC = () => {
       toast.error('Maximum 10 images allowed');
       return;
     }
+    if (files.length > 0) {
+      setCropQueue(files.slice(1));
+      setCurrentCropFile(files[0]);
+    }
+    e.target.value = '';
+  };
 
-    setImages([...images, ...files]);
-    
-    // Create previews
-    files.forEach(file => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreviews(prev => [...prev, reader.result as string]);
-      };
-      reader.readAsDataURL(file);
-    });
+  const handleCropComplete = (croppedFile: File) => {
+    setImages(prev => [...prev, croppedFile]);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreviews(prev => [...prev, reader.result as string]);
+    };
+    reader.readAsDataURL(croppedFile);
+    if (cropQueue.length > 0) {
+      setCurrentCropFile(cropQueue[0]);
+      setCropQueue(prev => prev.slice(1));
+    } else {
+      setCurrentCropFile(null);
+    }
+  };
+
+  const handleCropCancel = () => {
+    if (cropQueue.length > 0) {
+      setCurrentCropFile(cropQueue[0]);
+      setCropQueue(prev => prev.slice(1));
+    } else {
+      setCurrentCropFile(null);
+    }
+  };
+
+  // Drag reorder handlers
+  const handleDragStart = (index: number) => setDragIndex(index);
+  const handleDragOver = (e: React.DragEvent, index: number) => { e.preventDefault(); setDragOverIndex(index); };
+  const handleDragEnd = () => {
+    if (dragIndex !== null && dragOverIndex !== null && dragIndex !== dragOverIndex) {
+      const ri = [...images]; const rp = [...imagePreviews];
+      const [mi] = ri.splice(dragIndex, 1); ri.splice(dragOverIndex, 0, mi);
+      const [mp] = rp.splice(dragIndex, 1); rp.splice(dragOverIndex, 0, mp);
+      setImages(ri); setImagePreviews(rp);
+    }
+    setDragIndex(null); setDragOverIndex(null);
   };
 
   const removeImage = (index: number) => {
@@ -204,6 +321,18 @@ const handlePriceTierChange = (index: number, field: keyof PriceTier, value: str
 const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // 0. Copy mode validation: must change name and SKU
+    if (isCopyMode) {
+      if (!nameChanged) {
+        toast.error('Please change the Product Name before saving the copy.');
+        return;
+      }
+      if (!skuChanged) {
+        toast.error('Please enter a new unique SKU before saving the copy.');
+        return;
+      }
+    }
+
     // 1. Standard Validation
     if (!formData.name || !formData.description || !formData.price || !formData.stock || !formData.sku) {
       toast.error('Please fill in all required fields');
@@ -296,7 +425,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 
       await productApi.create(submitData);
       
-      toast.success('Product created successfully!');
+      toast.success(isCopyMode ? 'Product duplicated successfully!' : 'Product created successfully!');
       navigate('/admin/products');
     } catch (error: any) {
       console.error(error);
@@ -313,20 +442,43 @@ const handleSubmit = async (e: React.FormEvent) => {
           <button className="btn btn-secondary" onClick={() => navigate('/admin/products')}>
             <FiArrowLeft /> Back to Products
           </button>
-          <h1>Add New Product</h1>
+          <h1>{isCopyMode ? <><FiCopy /> Copy Listing</> : 'Add New Product'}</h1>
         </div>
+
+        {/* Copy Mode Banner */}
+        {isCopyMode && (
+          <div className="copy-mode-banner">
+            <div className="copy-banner-icon"><FiCopy /></div>
+            <div className="copy-banner-content">
+              <strong>Duplicating: {originalName}</strong>
+              <p>All product details have been copied. You <em>must</em> change the <strong>Product Name</strong> and <strong>SKU</strong> before saving.</p>
+              <div className="copy-checklist">
+                <span className={`copy-check-item ${nameChanged ? 'done' : 'pending'}`}>
+                  {nameChanged ? '✓' : '!'} Product Name {nameChanged ? 'changed' : 'needs change'}
+                </span>
+                <span className={`copy-check-item ${skuChanged ? 'done' : 'pending'}`}>
+                  {skuChanged ? '✓' : '!'} SKU {skuChanged ? 'changed' : 'needs change'}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {copyLoading ? (
+          <div className="loading-state"><div className="spinner"></div><p>Loading product data...</p></div>
+        ) : (
 
         <form onSubmit={handleSubmit} className="add-product-form">
           {/* Basic Information */}
           <div className="form-section">
             <h2>Basic Information</h2>
             
-            <div className="form-group">
-              <label className="form-label">Product Name *</label>
+            <div className={`form-group ${isCopyMode && !nameChanged ? 'copy-highlight' : ''}`}>
+              <label className="form-label">Product Name * {isCopyMode && !nameChanged && <span className="copy-field-warning"><FiAlertCircle /> Must change</span>}</label>
               <input
                 type="text"
                 name="name"
-                className="form-input"
+                className={`form-input ${isCopyMode && !nameChanged ? 'copy-input-warning' : ''}`}
                 value={formData.name}
                 onChange={handleChange}
                 placeholder="e.g., 400W Monocrystalline Solar Panel"
@@ -360,15 +512,15 @@ const handleSubmit = async (e: React.FormEvent) => {
                   )}
                 </select>
               </div>
-              <div className="form-group">
-                <label className="form-label">SKU *</label>
+              <div className={`form-group ${isCopyMode && !skuChanged ? 'copy-highlight' : ''}`}>
+                <label className="form-label">SKU * {isCopyMode && !skuChanged && <span className="copy-field-warning"><FiAlertCircle /> Must change</span>}</label>
                 <input
                   type="text"
                   name="sku"
-                  className="form-input"
+                  className={`form-input ${isCopyMode && !skuChanged ? 'copy-input-warning' : ''}`}
                   value={formData.sku}
                   onChange={handleChange}
-                  placeholder="e.g., SP-MONO-400"
+                  placeholder={isCopyMode ? 'Enter a new unique SKU' : 'e.g., SP-MONO-400'}
                   required
                 />
               </div>
@@ -622,18 +774,26 @@ const handleSubmit = async (e: React.FormEvent) => {
             {imagePreviews.length > 0 && (
               <div className="image-previews">
                 {imagePreviews.map((preview, index) => (
-                  <div key={index} className="image-preview">
+                  <div 
+                    key={index} 
+                    className={`image-preview draggable ${dragIndex === index ? 'dragging' : ''} ${dragOverIndex === index ? 'drag-over' : ''}`}
+                    draggable
+                    onDragStart={() => handleDragStart(index)}
+                    onDragOver={(e) => handleDragOver(e, index)}
+                    onDragEnd={handleDragEnd}
+                    onDragLeave={() => setDragOverIndex(null)}
+                  >
+                    <div className="drag-handle" title="Drag to reorder"><FiMove /></div>
+                    <span className="image-order-badge">{index + 1}</span>
+                    {index === 0 && <span className="primary-badge">Primary</span>}
                     <img src={preview} alt={`Preview ${index + 1}`} />
-                    <button 
-                      type="button" 
-                      className="remove-image"
-                      onClick={() => removeImage(index)}
-                    >
-                      <FiTrash2 />
-                    </button>
+                    <button type="button" className="remove-image" onClick={() => removeImage(index)}><FiTrash2 /></button>
                   </div>
                 ))}
               </div>
+            )}
+            {imagePreviews.length > 1 && (
+              <p className="drag-hint">💡 Drag images to reorder. First image will be the main product photo.</p>
             )}
           </div>
 
@@ -712,12 +872,29 @@ const handleSubmit = async (e: React.FormEvent) => {
             <button type="button" className="btn btn-secondary" onClick={() => navigate('/admin/products')}>
               Cancel
             </button>
-            <button type="submit" className="btn btn-primary btn-lg" disabled={loading}>
-              <FiSave />
-              {loading ? 'Creating...' : 'Create Product'}
+            <button 
+              type="submit" 
+              className="btn btn-primary btn-lg" 
+              disabled={loading || (isCopyMode && (!nameChanged || !skuChanged))}
+            >
+              {isCopyMode ? <FiCopy /> : <FiSave />}
+              {loading ? (isCopyMode ? 'Duplicating...' : 'Creating...') : (isCopyMode ? 'Create Duplicate' : 'Create Product')}
             </button>
           </div>
         </form>
+        )}
+
+        {/* Image Crop Modal */}
+        {currentCropFile && (
+          <ImageCropModal
+            imageFile={currentCropFile}
+            aspectWidth={1}
+            aspectHeight={1}
+            outputWidth={800}
+            onCropComplete={handleCropComplete}
+            onCancel={handleCropCancel}
+          />
+        )}
       </div>
     </div>
   );

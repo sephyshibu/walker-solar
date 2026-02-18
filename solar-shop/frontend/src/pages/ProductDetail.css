@@ -376,7 +376,7 @@
   margin-bottom: 1.5rem;
 }
 
-.quantity-section > div:first-of-type {
+.quantity-section>div:first-of-type {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -529,11 +529,24 @@
   color: var(--text-primary);
 }
 
-/* Product Tabs */
+/* Product Tabs - Horizontal Layout */
 .product-tabs {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: 1.5fr 1fr;
   gap: 2rem;
+  align-items: start;
+}
+
+.product-tabs-right {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+@media (max-width: 1024px) {
+  .product-tabs {
+    grid-template-columns: 1fr;
+  }
 }
 
 .tab-content {

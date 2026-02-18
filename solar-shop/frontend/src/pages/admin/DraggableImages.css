@@ -1,0 +1,136 @@
+/* ========================================
+   DRAGGABLE IMAGE PREVIEWS
+   Add this import to AddProduct.css or 
+   import separately in both AddProduct & EditProduct
+   ======================================== */
+
+/* Draggable image preview cards */
+.image-preview.draggable {
+  position: relative;
+  cursor: grab;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, border-color 0.2s ease;
+  border: 2px solid transparent;
+}
+
+.image-preview.draggable:active {
+  cursor: grabbing;
+}
+
+/* Currently being dragged */
+.image-preview.dragging {
+  opacity: 0.4;
+  transform: scale(0.95);
+  border-color: var(--color-primary, #f59e0b);
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+}
+
+/* Drop target indicator */
+.image-preview.drag-over {
+  border-color: var(--color-primary, #f59e0b);
+  transform: scale(1.05);
+  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.25);
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.image-preview.drag-over::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 2px dashed var(--color-primary, #f59e0b);
+  border-radius: inherit;
+  z-index: 5;
+  pointer-events: none;
+  animation: dragPulse 1s ease-in-out infinite;
+}
+
+@keyframes dragPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* Drag handle icon (top-left) */
+.drag-handle {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  border-radius: 6px;
+  color: #fff;
+  font-size: 0.85rem;
+  opacity: 0;
+  transition: opacity 0.2s ease, background 0.2s ease;
+  cursor: grab;
+}
+
+.image-preview.draggable:hover .drag-handle {
+  opacity: 1;
+}
+
+.drag-handle:hover {
+  background: var(--color-primary, #f59e0b);
+  color: #000;
+}
+
+/* Order number badge (top-right) */
+.image-order-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  border-radius: 50%;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  font-family: 'Space Grotesk', monospace, sans-serif;
+}
+
+/* Primary image badge */
+.primary-badge {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  z-index: 4;
+  padding: 2px 8px;
+  background: var(--color-primary, #f59e0b);
+  color: #000;
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-radius: 4px;
+}
+
+/* Drag hint text */
+.drag-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted, #666);
+  margin-top: 0.5rem;
+  text-align: center;
+}
+
+/* Ensure remove button stays above drag overlay */
+.image-preview.draggable .remove-image {
+  z-index: 6;
+}
+
+/* Adjust new-badge position to not overlap with drag handle */
+.image-preview.draggable .new-badge {
+  top: auto;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+}

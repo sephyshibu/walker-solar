@@ -1,0 +1,162 @@
+/* ========================================
+   COPY / DUPLICATE LISTING STYLES
+   ======================================== */
+
+/* Copy Mode Banner */
+.copy-mode-banner {
+  display: flex;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(59, 130, 246, 0.05));
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-left: 4px solid #3b82f6;
+  border-radius: var(--border-radius-lg, 12px);
+  animation: bannerSlideIn 0.3s ease-out;
+}
+
+@keyframes bannerSlideIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.copy-banner-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  background: rgba(59, 130, 246, 0.15);
+  border-radius: 10px;
+  color: #3b82f6;
+  font-size: 1.25rem;
+}
+
+.copy-banner-content {
+  flex: 1;
+}
+
+.copy-banner-content strong {
+  display: block;
+  font-size: 1rem;
+  color: var(--text-primary, #fff);
+  margin-bottom: 0.25rem;
+}
+
+.copy-banner-content p {
+  font-size: 0.85rem;
+  color: var(--text-secondary, #aaa);
+  margin: 0 0 0.75rem 0;
+  line-height: 1.5;
+}
+
+.copy-banner-content p em {
+  font-style: normal;
+  text-decoration: underline;
+  text-decoration-color: rgba(245, 158, 11, 0.5);
+}
+
+/* Checklist */
+.copy-checklist {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.copy-check-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 100px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.copy-check-item.pending {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--color-primary, #f59e0b);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.copy-check-item.done {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--color-success, #22c55e);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+/* Highlighted fields that must change */
+.copy-highlight {
+  position: relative;
+}
+
+.copy-highlight::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border: 2px dashed rgba(245, 158, 11, 0.4);
+  border-radius: calc(var(--border-radius-md, 8px) + 4px);
+  pointer-events: none;
+  animation: copyHighlightPulse 2s ease-in-out infinite;
+}
+
+@keyframes copyHighlightPulse {
+  0%, 100% { border-color: rgba(245, 158, 11, 0.2); }
+  50% { border-color: rgba(245, 158, 11, 0.6); }
+}
+
+.copy-input-warning {
+  border-color: rgba(245, 158, 11, 0.5) !important;
+  background: rgba(245, 158, 11, 0.05) !important;
+}
+
+.copy-input-warning:focus {
+  border-color: var(--color-primary, #f59e0b) !important;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2) !important;
+}
+
+.copy-field-warning {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-primary, #f59e0b);
+  margin-left: 0.5rem;
+  vertical-align: middle;
+}
+
+.copy-field-warning svg {
+  font-size: 0.75rem;
+}
+
+/* Copy button in admin products table */
+.action-btn.copy {
+  color: #3b82f6;
+}
+
+.action-btn.copy:hover {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+}
+
+/* Submit button disabled state for copy mode */
+.btn.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .copy-mode-banner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .copy-checklist {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}

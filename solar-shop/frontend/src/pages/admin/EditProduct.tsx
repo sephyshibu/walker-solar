@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { FiSave, FiPlus, FiTrash2, FiUpload, FiArrowLeft, FiDollarSign, FiImage } from 'react-icons/fi';
+import { FiSave, FiPlus, FiTrash2, FiUpload, FiArrowLeft, FiDollarSign, FiImage, FiMove } from 'react-icons/fi';
 import { productApi, categoryApi } from '../../services/api';
 import { Product } from '../../types';
 import toast from 'react-hot-toast';
+import ImageCropModal from './imageCropModal';
 import './Admin.css';
 import './AddProduct.css';
+import './DraggableImages.css';
 
 interface CategoryOption {
   id: string;
@@ -46,6 +48,17 @@ const EditProduct: React.FC = () => {
   // New images to upload
   const [newImages, setNewImages] = useState<File[]>([]);
   const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
+  
+  // Image crop state
+  const [cropQueue, setCropQueue] = useState<File[]>([]);
+  const [currentCropFile, setCurrentCropFile] = useState<File | null>(null);
+
+  // Drag reorder state for existing images
+  const [dragExistingIndex, setDragExistingIndex] = useState<number | null>(null);
+  const [dragOverExistingIndex, setDragOverExistingIndex] = useState<number | null>(null);
+  // Drag reorder state for new images
+  const [dragNewIndex, setDragNewIndex] = useState<number | null>(null);
+  const [dragOverNewIndex, setDragOverNewIndex] = useState<number | null>(null);
   
   // Existing images from the product
   const [existingImages, setExistingImages] = useState<string[]>([]);
@@ -188,16 +201,90 @@ const EditProduct: React.FC = () => {
       return;
     }
 
-    setNewImages([...newImages, ...files]);
+    // Queue files for cropping one by one
+    if (files.length > 0) {
+      setCropQueue(files.slice(1));
+      setCurrentCropFile(files[0]);
+    }
+
+    // Reset input
+    e.target.value = '';
+  };
+
+  const handleCropComplete = (croppedFile: File) => {
+    setNewImages(prev => [...prev, croppedFile]);
     
-    // Create previews
-    files.forEach(file => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setNewImagePreviews(prev => [...prev, reader.result as string]);
-      };
-      reader.readAsDataURL(file);
-    });
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setNewImagePreviews(prev => [...prev, reader.result as string]);
+    };
+    reader.readAsDataURL(croppedFile);
+
+    // Process next in queue
+    if (cropQueue.length > 0) {
+      setCurrentCropFile(cropQueue[0]);
+      setCropQueue(prev => prev.slice(1));
+    } else {
+      setCurrentCropFile(null);
+    }
+  };
+
+  const handleCropCancel = () => {
+    if (cropQueue.length > 0) {
+      setCurrentCropFile(cropQueue[0]);
+      setCropQueue(prev => prev.slice(1));
+    } else {
+      setCurrentCropFile(null);
+    }
+  };
+
+  // Drag reorder handlers for existing images
+  const handleExistingDragStart = (index: number) => {
+    setDragExistingIndex(index);
+  };
+
+  const handleExistingDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    setDragOverExistingIndex(index);
+  };
+
+  const handleExistingDragEnd = () => {
+    if (dragExistingIndex !== null && dragOverExistingIndex !== null && dragExistingIndex !== dragOverExistingIndex) {
+      const reordered = [...existingImages];
+      const [moved] = reordered.splice(dragExistingIndex, 1);
+      reordered.splice(dragOverExistingIndex, 0, moved);
+      setExistingImages(reordered);
+    }
+    setDragExistingIndex(null);
+    setDragOverExistingIndex(null);
+  };
+
+  // Drag reorder handlers for new images
+  const handleNewDragStart = (index: number) => {
+    setDragNewIndex(index);
+  };
+
+  const handleNewDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    setDragOverNewIndex(index);
+  };
+
+  const handleNewDragEnd = () => {
+    if (dragNewIndex !== null && dragOverNewIndex !== null && dragNewIndex !== dragOverNewIndex) {
+      const reorderedImages = [...newImages];
+      const reorderedPreviews = [...newImagePreviews];
+      
+      const [movedImage] = reorderedImages.splice(dragNewIndex, 1);
+      reorderedImages.splice(dragOverNewIndex, 0, movedImage);
+      
+      const [movedPreview] = reorderedPreviews.splice(dragNewIndex, 1);
+      reorderedPreviews.splice(dragOverNewIndex, 0, movedPreview);
+      
+      setNewImages(reorderedImages);
+      setNewImagePreviews(reorderedPreviews);
+    }
+    setDragNewIndex(null);
+    setDragOverNewIndex(null);
   };
 
   const removeExistingImage = (imageUrl: string) => {
@@ -793,7 +880,20 @@ const EditProduct: React.FC = () => {
                 <h4><FiImage /> Current Images</h4>
                 <div className="image-previews">
                   {existingImages.map((image, index) => (
-                    <div key={index} className="image-preview existing">
+                    <div 
+                      key={`existing-${index}`} 
+                      className={`image-preview existing draggable ${dragExistingIndex === index ? 'dragging' : ''} ${dragOverExistingIndex === index ? 'drag-over' : ''}`}
+                      draggable
+                      onDragStart={() => handleExistingDragStart(index)}
+                      onDragOver={(e) => handleExistingDragOver(e, index)}
+                      onDragEnd={handleExistingDragEnd}
+                      onDragLeave={() => setDragOverExistingIndex(null)}
+                    >
+                      <div className="drag-handle" title="Drag to reorder">
+                        <FiMove />
+                      </div>
+                      <span className="image-order-badge">{index + 1}</span>
+                      {index === 0 && <span className="primary-badge">Primary</span>}
                       <img src={getImageUrl(image)} alt={`Product ${index + 1}`} />
                       <button 
                         type="button" 
@@ -805,6 +905,9 @@ const EditProduct: React.FC = () => {
                     </div>
                   ))}
                 </div>
+                {existingImages.length > 1 && (
+                  <p className="drag-hint">💡 Drag images to reorder. First image will be the main product photo.</p>
+                )}
               </div>
             )}
 
@@ -830,9 +933,21 @@ const EditProduct: React.FC = () => {
               {newImagePreviews.length > 0 && (
                 <div className="image-previews">
                   {newImagePreviews.map((preview, index) => (
-                    <div key={index} className="image-preview new">
-                      <img src={preview} alt={`New ${index + 1}`} />
+                    <div 
+                      key={`new-${index}`} 
+                      className={`image-preview new draggable ${dragNewIndex === index ? 'dragging' : ''} ${dragOverNewIndex === index ? 'drag-over' : ''}`}
+                      draggable
+                      onDragStart={() => handleNewDragStart(index)}
+                      onDragOver={(e) => handleNewDragOver(e, index)}
+                      onDragEnd={handleNewDragEnd}
+                      onDragLeave={() => setDragOverNewIndex(null)}
+                    >
+                      <div className="drag-handle" title="Drag to reorder">
+                        <FiMove />
+                      </div>
+                      <span className="image-order-badge">{existingImages.length + index + 1}</span>
                       <span className="new-badge">NEW</span>
+                      <img src={preview} alt={`New ${index + 1}`} />
                       <button 
                         type="button" 
                         className="remove-image"
@@ -843,6 +958,9 @@ const EditProduct: React.FC = () => {
                     </div>
                   ))}
                 </div>
+              )}
+              {newImagePreviews.length > 1 && (
+                <p className="drag-hint">💡 Drag new images to reorder them.</p>
               )}
             </div>
 
@@ -932,6 +1050,18 @@ const EditProduct: React.FC = () => {
             </button>
           </div>
         </form>
+
+        {/* Image Crop Modal */}
+        {currentCropFile && (
+          <ImageCropModal
+            imageFile={currentCropFile}
+            aspectWidth={1}
+            aspectHeight={1}
+            outputWidth={800}
+            onCropComplete={handleCropComplete}
+            onCancel={handleCropCancel}
+          />
+        )}
       </div>
     </div>
   );
