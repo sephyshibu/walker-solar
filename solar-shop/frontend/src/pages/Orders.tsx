@@ -83,7 +83,7 @@ const Orders: React.FC = () => {
   return (
     <div className="orders-page">
       <div className="container">
-        <h1>My Orders</h1>
+        <h1>Orders ({orders.length})</h1>
 
         {loading ? (
           <div className="loading">Loading orders...</div>
@@ -95,73 +95,78 @@ const Orders: React.FC = () => {
             <Link to="/products" className="btn btn-primary">Browse Products</Link>
           </div>
         ) : (
-          <div className="orders-list">
-            {orders.map((order) => (
-              <div key={order.id} className="order-card">
-                <div className="order-header">
-                  <div>
-                    <span className="order-number">{order.orderNumber}</span>
-                    <span className="order-date">
-                      {new Date(order.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                  <span className={`badge badge-${getStatusColor(order.status)}`}>
-                    {order.status}
-                  </span>
-                </div>
-                <div className="order-items">
-                  {order.items.slice(0, 3).map((item, index) => (
-                    <span key={index}>{item.productName}</span>
-                  ))}
-                  {order.items.length > 3 && (
-                    <span>+{order.items.length - 3} more</span>
-                  )}
-                </div>
-                
-                {/* Tracking Info */}
-                {order.tracking && (
-                  <div className="order-tracking">
-                    <FiTruck className="tracking-icon" />
-                    <div className="tracking-details">
-                      <span className="tracking-courier">{getCourierLabel(order.tracking.courierService)}</span>
-                      <span className="tracking-awb">AWB: {order.tracking.awbNumber}</span>
-                    </div>
-                    <a 
-                      href={order.tracking.trackingUrl} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="btn btn-sm btn-track"
-                    >
-                      <FiExternalLink />
-                      Track Order
-                    </a>
-                  </div>
-                )}
+          <div className="orders-table-container">
+            <table className="orders-table">
+              <thead>
+                <tr>
+                  <th>ORDER</th>
+                  <th>ITEMS</th>
+                  <th>TOTAL</th>
+                  <th>STATUS</th>
+                  <th>TRACKING</th>
+                  <th>INVOICE</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orders.map((order) => (
+                  <tr key={order.id}>
+                    {/* Order Number & Date */}
+                    <td className="col-order">
+                      <span className="order-number">{order.orderNumber}</span>
+                      <span className="order-date">
+                        {new Date(order.createdAt).toLocaleDateString()}
+                      </span>
+                    </td>
 
-                {/* Invoice Download */}
-                {order.invoice && (
-                  <div className="order-invoice">
-                    <FiFileText className="invoice-icon" />
-                    <span className="invoice-label">Invoice Available</span>
-                    <button 
-                      onClick={() => downloadInvoice(
-                        order.invoice!.url, 
-                        order.invoice!.originalName || `invoice_${order.orderNumber}.pdf`
+                    {/* Items */}
+                    <td className="col-items">{order.totalItems}</td>
+
+                    {/* Total */}
+                    <td className="col-total">{formatPrice(order.totalAmount)}</td>
+
+                    {/* Status */}
+                    <td className="col-status">
+                      <span className={`badge badge-${getStatusColor(order.status)}`}>
+                        {order.status}
+                      </span>
+                    </td>
+
+                    {/* Tracking */}
+                    <td className="col-tracking">
+                      {order.tracking ? (
+                        <a 
+                          href={order.tracking.trackingUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="tracking-link"
+                        >
+                          {order.tracking.awbNumber} <FiExternalLink />
+                        </a>
+                      ) : (
+                        <span className="text-muted">-</span>
                       )}
-                      className="btn btn-sm btn-download-invoice"
-                    >
-                      <FiDownload />
-                      Download Invoice
-                    </button>
-                  </div>
-                )}
+                    </td>
 
-                <div className="order-footer">
-                  <span className="order-total">{formatPrice(order.totalAmount)}</span>
-                  <span className="order-items-count">{order.totalItems} items</span>
-                </div>
-              </div>
-            ))}
+                    {/* Invoice */}
+                    <td className="col-invoice">
+                      {order.invoice ? (
+                        <button 
+                          onClick={() => downloadInvoice(
+                            order.invoice!.url, 
+                            order.invoice!.originalName || `invoice_${order.orderNumber}.pdf`
+                          )}
+                          className="btn-invoice"
+                        >
+                          <FiDownload /> UPLOAD
+                        </button>
+                      ) : (
+                        <span className="text-muted">-</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
