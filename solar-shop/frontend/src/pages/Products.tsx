@@ -33,6 +33,7 @@ const Products: React.FC = () => {
   const sortOrder = searchParams.get('sortOrder') || 'desc';
   const minPrice = searchParams.get('minPrice') || '';
   const maxPrice = searchParams.get('maxPrice') || '';
+  const currentPage = parseInt(searchParams.get('page') || '1', 10); // ADD THIS
 
   // Get category label and description from dynamic categories
   const currentCategory = categories.find(c => c.slug === categorySlug);
@@ -71,7 +72,7 @@ const Products: React.FC = () => {
     setLoading(true);
     try {
       const params: any = {
-        page: pagination.page,
+        page: currentPage,
         limit: pagination.limit,
         sortBy,
         sortOrder,
