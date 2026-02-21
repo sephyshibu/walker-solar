@@ -69,7 +69,7 @@ const Home: React.FC = () => {
  return (
     <div className="home-page">
       <SEO 
-        title="WALKERS - Solar Panels, Inverters & Fencing in Pathanamthitta"
+        title="WALKERS - Solar Panels, Inverters & Solar Electric Fencing in Pathanamthitta"
         description="Best solar panel dealers in Pathanamthitta. We provide premium solar energy systems, lithium batteries, and solar electric fencing across Kerala."
         keywords="Best solar panel dealers in Pathanamthitta, Inverter battery shop in Kerala, Solar fencing installers near me"
         url="https://walkers.org.in"
