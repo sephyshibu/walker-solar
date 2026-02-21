@@ -66,16 +66,16 @@ const Home: React.FC = () => {
     { icon: FiZap, title: 'Expert Support', desc: '24/7 technical assistance available' },
   ];
 
-  return (
+ return (
     <div className="home-page">
       <SEO 
-        title="WALKERS - Premium Solar Products | Go Green with Clean Energy"
-        description="Shop premium solar products at WALKERS. High-efficiency solar panels, hybrid inverters, lithium batteries, charge controllers & accessories. Best prices in India with warranty!"
-        keywords="solar panels India, buy solar panels, solar inverters, solar batteries, renewable energy, WALKERS solar shop, clean energy solutions"
-        url="https://walkers.com"
+        title="WALKERS - Solar Panels, Inverters & Fencing in Pathanamthitta"
+        description="Best solar panel dealers in Pathanamthitta. We provide premium solar energy systems, lithium batteries, and solar electric fencing across Kerala."
+        keywords="Best solar panel dealers in Pathanamthitta, Inverter battery shop in Kerala, Solar fencing installers near me"
+        url="https://walkers.org.in"
       />
       
-      {/* Hero Section */}
+     {/* Hero Section */}
       <section className="hero">
         <div className="hero-bg">
           <div className="hero-gradient" />
@@ -83,10 +83,10 @@ const Home: React.FC = () => {
         </div>
         <div className="container hero-content">
           <div className="hero-text">
-            <span className="hero-badge">⚡ WALKERS - Power Solutions</span>
+            <span className="hero-badge">⚡ Top Rated in Pathanamthitta, Kerala</span>
             <h1>
               Smart
-               <span className="highlight"> Solar Energy</span>  & Advanced 
+               <span className="highlight"> Solar Energy</span> & Advanced 
               <span className="highlight"> Electric Fencing </span>
               Solutions
             </h1>
@@ -222,12 +222,12 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
+     {/* CTA Section */}
       <section className="section cta-section">
         <div className="container">
           <div className="cta-content">
-            <h2>Smart Solar Power & Solar Security Fencing</h2>
-            <p>Get a free consultation and customized quote for your needs</p>
+            <h2>Secure Your Property & Cut KSEB Bills Today</h2>
+            <p>Get a free consultation and customized quote for your home or farm in Kerala.</p>
             <div className="cta-actions">
               <Link to="/contact" className="btn btn-primary btn-lg">
                 Contact Us <FiArrowRight />

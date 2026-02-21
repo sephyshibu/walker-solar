@@ -10,11 +10,11 @@ interface SEOProps {
 }
 
 const SEO: React.FC<SEOProps> = ({
-  title = 'WALKERS - Premium Solar Products',
-  description = 'Shop premium solar products at WALKERS. High-efficiency solar panels, hybrid inverters, lithium batteries & accessories. Best prices in India with warranty!',
-  keywords = 'solar panels, solar inverters, solar batteries, renewable energy, WALKERS solar',
+  title = 'WALKERS - Top Solar & Inverter Dealers in Pathanamthitta',
+  description = 'Looking for the best solar panel dealers in Pathanamthitta? WALKERS offers high-efficiency solar panels, hybrid inverters, lithium batteries, and solar fencing in Kerala.',
+  keywords = 'Best solar panel dealers in Pathanamthitta, Inverter battery shop in Kerala, Solar fencing installers near me, solar pumps Kerala',
   image = '/walkers_logo.png',
-  url = 'https://walkers.com',
+  url = 'https://walkers.org.in', // Make sure to use your actual .org.in domain
 }) => {
   const fullTitle = title.includes('WALKERS') ? title : `${title} | WALKERS`;
   
