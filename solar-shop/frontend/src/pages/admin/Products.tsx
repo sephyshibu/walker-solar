@@ -58,7 +58,7 @@ const Products: React.FC = () => {
     navigate(`/admin/products/add?copyFrom=${id}`);
   };
 
-  const formatPrice = (price: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(price);
+ const formatPrice = (price: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 }).format(price);
 
   return (
     <div className="admin-page">

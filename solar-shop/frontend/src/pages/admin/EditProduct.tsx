@@ -739,7 +739,7 @@ const EditProduct: React.FC = () => {
                   {priceTiers.map((tier, index) => {
                     const basePrice = parseFloat(formData.discountPrice || formData.price) || 0;
                     const savings = basePrice > 0 && tier.price > 0 && tier.price < basePrice
-                      ? Math.round(((basePrice - tier.price) / basePrice) * 100)
+                      ? parseFloat((((basePrice - tier.price) / basePrice) * 100).toFixed(2))
                       : 0;
 
                     return (
@@ -815,7 +815,7 @@ const EditProduct: React.FC = () => {
                           <strong>₹{tier.price.toLocaleString()}</strong>
                           {tier.price < parseFloat(formData.discountPrice || formData.price) && (
                             <em className="savings-text">
-                              (Save {Math.round(((parseFloat(formData.discountPrice || formData.price) - tier.price) / parseFloat(formData.discountPrice || formData.price)) * 100)}%)
+                             (Save {(((parseFloat(formData.discountPrice || formData.price) - tier.price) / parseFloat(formData.discountPrice || formData.price)) * 100).toFixed(2)}%)
                             </em>
                           )}
                         </li>

@@ -280,31 +280,30 @@ const AddProduct: React.FC = () => {
   };
 
   // Price tier handlers
- // Price tier handlers
-const handlePriceTierChange = (index: number, field: keyof PriceTier, value: string) => {
-  const updated = [...priceTiers];
+  const handlePriceTierChange = (index: number, field: keyof PriceTier, value: string) => {
+    const updated = [...priceTiers];
 
-  if (field === 'price') {
-    updated[index].price = parseFloat(value) || 0;
-  } 
-  else if (field === 'minQuantity') {
-    // Only allow changing min quantity for the very first tier
-    if (index === 0) {
-      updated[index].minQuantity = parseInt(value) || 1;
+    if (field === 'price') {
+      updated[index].price = parseFloat(value) || 0;
+    } 
+    else if (field === 'minQuantity') {
+      // Only allow changing min quantity for the very first tier
+      if (index === 0) {
+        updated[index].minQuantity = parseInt(value) || 1;
+      }
+    } 
+    else if (field === 'maxQuantity') {
+      const newVal = value === '' ? null : parseInt(value);
+      updated[index].maxQuantity = newVal;
+
+      // AUTOMATION: If we change Max, automatically set the Next Tier's Min to Max + 1
+      if (index < updated.length - 1 && newVal !== null) {
+        updated[index + 1].minQuantity = newVal + 1;
+      }
     }
-  } 
-  else if (field === 'maxQuantity') {
-    const newVal = value === '' ? null : parseInt(value);
-    updated[index].maxQuantity = newVal;
 
-    // AUTOMATION: If we change Max, automatically set the Next Tier's Min to Max + 1
-    if (index < updated.length - 1 && newVal !== null) {
-      updated[index + 1].minQuantity = newVal + 1;
-    }
-  }
-
-  setPriceTiers(updated);
-};
+    setPriceTiers(updated);
+  };
 
   const addPriceTier = () => {
     const lastTier = priceTiers[priceTiers.length - 1];
@@ -318,7 +317,7 @@ const handlePriceTierChange = (index: number, field: keyof PriceTier, value: str
     }
   };
 
-const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // 0. Copy mode validation: must change name and SKU
@@ -503,8 +502,6 @@ const handleSubmit = async (e: React.FormEvent) => {
                     <option value="">No categories available</option>
                   ) : (
                     categories.map(cat => (
-                      /* FIX 2: Use cat.id as the value. 
-                         Ensure your Category interface matches API response (id vs _id) */
                       <option key={cat.id} value={cat.id}>
                         {cat.name}
                       </option>
@@ -653,8 +650,10 @@ const handleSubmit = async (e: React.FormEvent) => {
                   
                   {priceTiers.map((tier, index) => {
                     const basePrice = parseFloat(formData.discountPrice || formData.price) || 0;
+                    
+                    // REMOVED: Math.round() 
                     const savings = basePrice > 0 && tier.price > 0 
-                      ? Math.round(((basePrice - tier.price) / basePrice) * 100) 
+                      ? ((basePrice - tier.price) / basePrice) * 100 
                       : 0;
                     
                     return (
@@ -672,9 +671,9 @@ const handleSubmit = async (e: React.FormEvent) => {
                           className="form-input tier-input"
                           value={tier.maxQuantity || ''}
                           onChange={(e) => handlePriceTierChange(index, 'maxQuantity', e.target.value)}
-                          placeholder="Max" // <--- CHANGED from "No Limit" to "Max"
+                          placeholder="Max"
                           min={tier.minQuantity}
-                          required // <--- Added HTML5 required attribute for visual cues
+                          required
                         />
                         <input
                           type="number"
@@ -686,7 +685,8 @@ const handleSubmit = async (e: React.FormEvent) => {
                           step="0.01"
                         />
                         <span className={`tier-savings ${savings > 0 ? 'has-savings' : ''}`}>
-                          {savings > 0 ? `-${savings}%` : '-'}
+                          {/* Format to 2 decimal places to avoid messy UI overflow if it's a floating point */}
+                          {savings > 0 ? `-${Number.isInteger(savings) ? savings : savings.toFixed(2)}%` : '-'}
                         </span>
                         <button 
                           type="button" 
