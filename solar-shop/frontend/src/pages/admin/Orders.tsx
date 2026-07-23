@@ -12,6 +12,11 @@ import {
   FiChevronRight,
   FiPackage,
   FiAlertCircle,
+  FiEye,
+  FiUser,
+  FiMail,
+  FiPhone,
+  FiMapPin,
 } from 'react-icons/fi';
 import { Order, CourierService as CourierServiceType, PaginatedResponse } from '../../types';
 import { orderApi } from '../../services/api';
@@ -65,6 +70,10 @@ const Orders: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState('');
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  // Detail modals
+  const [detailOrder, setDetailOrder] = useState<Order | null>(null);
+  const [customerOrder, setCustomerOrder] = useState<Order | null>(null);
 
   const [trackingModal, setTrackingModal] = useState<{ show: boolean; orderId: string; orderNumber: string }>({
     show: false,
@@ -130,6 +139,27 @@ const Orders: React.FC = () => {
   useEffect(() => {
     loadCourierServices();
   }, [loadCourierServices]);
+
+  // Close any open modal on Escape + lock background scroll
+  const anyModalOpen =
+    !!detailOrder || !!customerOrder || trackingModal.show || invoiceModal.show;
+  useEffect(() => {
+    if (!anyModalOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setDetailOrder(null);
+        setCustomerOrder(null);
+        setTrackingModal({ show: false, orderId: '', orderNumber: '' });
+        setInvoiceModal({ show: false, orderId: '', orderNumber: '' });
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = '';
+    };
+  }, [anyModalOpen]);
 
   const downloadInvoice = async (url: string, filename: string) => {
     try {
@@ -244,6 +274,15 @@ const Orders: React.FC = () => {
   const formatPrice = (price: number) =>
     new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(price);
 
+  const formatDateTime = (iso: string) =>
+    new Date(iso).toLocaleString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
   // Windowed page numbers so this scales to many pages
   const getPageNumbers = (): number[] => {
     const delta = 2;
@@ -335,12 +374,13 @@ const Orders: React.FC = () => {
                     <th>Order</th>
                     <th>Customer</th>
                     <th>Customer Number</th>
-                    <th>Shipping Address</th>
+                    
                     <th>Items</th>
                     <th>Total</th>
                     <th>Status</th>
                     <th>Tracking</th>
                     <th>Invoice</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -360,10 +400,10 @@ const Orders: React.FC = () => {
 
                       <td style={{ whiteSpace: 'nowrap' }}>{order.shippingAddress.phone}</td>
 
-                      <td>
+                      {/* <td>
                         {order.shippingAddress.street}, {order.shippingAddress.city},{' '}
                         {order.shippingAddress.state} {order.shippingAddress.zipCode}
-                      </td>
+                      </td> */}
 
                       <td>{order.totalItems}</td>
                       <td>{formatPrice(order.totalAmount)}</td>
@@ -444,6 +484,26 @@ const Orders: React.FC = () => {
                         ) : (
                           <span className="invoice-na">&mdash;</span>
                         )}
+                      </td>
+
+                      {/* Actions: View order + Customer details */}
+                      <td>
+                        <div className="order-actions">
+                          <button
+                            className="btn btn-sm btn-view-order"
+                            onClick={() => setDetailOrder(order)}
+                            title="View order details"
+                          >
+                            <FiEye /> View
+                          </button>
+                          <button
+                            className="btn btn-sm btn-customer"
+                            onClick={() => setCustomerOrder(order)}
+                            title="View customer details"
+                          >
+                            <FiUser /> Customer
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -528,6 +588,180 @@ const Orders: React.FC = () => {
           </>
         )}
       </div>
+
+      {/* ---------------- Order Details Modal ---------------- */}
+      {detailOrder && (
+        <div className="modal-overlay" onClick={() => setDetailOrder(null)}>
+          <div className="modal-content order-details-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Order {detailOrder.orderNumber}</h2>
+              <button className="modal-close" onClick={() => setDetailOrder(null)} aria-label="Close">
+                <FiX />
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <div className="od-meta">
+                <div>
+                  <span className="od-label">Date</span>
+                  <span className="od-value">{formatDateTime(detailOrder.createdAt)}</span>
+                </div>
+                <div>
+                  <span className="od-label">Status</span>
+                  <span className="od-value od-status">{detailOrder.status}</span>
+                </div>
+                <div>
+                  <span className="od-label">Total Items</span>
+                  <span className="od-value">{detailOrder.totalItems}</span>
+                </div>
+                <div>
+                  <span className="od-label">WhatsApp Sent</span>
+                  <span className="od-value">{detailOrder.whatsappSent ? 'Yes' : 'No'}</span>
+                </div>
+              </div>
+
+              <p className="od-section-title">Items</p>
+              <div className="od-items">
+                {detailOrder.items.map((item, i) => (
+                  <div className="od-item" key={item.productId || i}>
+                    {item.productImage ? (
+                      <img
+                        src={item.productImage}
+                        alt={item.productName}
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.visibility = 'hidden';
+                        }}
+                      />
+                    ) : (
+                      <div className="od-item-noimg">
+                        <FiPackage />
+                      </div>
+                    )}
+                    <div className="od-item-info">
+                      <div className="od-item-name">{item.productName}</div>
+                      <div className="od-item-qty">
+                        {formatPrice(item.price)} × {item.quantity}
+                      </div>
+                    </div>
+                    <div className="od-item-subtotal">{formatPrice(item.subtotal)}</div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="od-total-row">
+                <span className="od-total-label">Order Total</span>
+                <span className="od-total-value">{formatPrice(detailOrder.totalAmount)}</span>
+              </div>
+
+              {detailOrder.notes && (
+                <>
+                  <p className="od-section-title">Notes</p>
+                  <p className="od-note">{detailOrder.notes}</p>
+                </>
+              )}
+
+              {detailOrder.tracking && (
+                <>
+                  <p className="od-section-title">Tracking</p>
+                  <p className="od-note">
+                    AWB: <strong>{detailOrder.tracking.awbNumber}</strong> ({detailOrder.tracking.courierService})
+                    {' — '}
+                    <a href={detailOrder.tracking.trackingUrl} target="_blank" rel="noopener noreferrer">
+                      Track shipment
+                    </a>
+                  </p>
+                </>
+              )}
+            </div>
+
+            <div className="modal-footer">
+              <button
+                className="btn btn-secondary"
+                onClick={() => {
+                  const o = detailOrder;
+                  setDetailOrder(null);
+                  setCustomerOrder(o);
+                }}
+              >
+                <FiUser /> Customer Details
+              </button>
+              <button className="btn btn-primary" onClick={() => setDetailOrder(null)}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ---------------- Customer Details Modal ---------------- */}
+      {customerOrder && (
+        <div className="modal-overlay" onClick={() => setCustomerOrder(null)}>
+          <div className="modal-content customer-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Customer Details</h2>
+              <button className="modal-close" onClick={() => setCustomerOrder(null)} aria-label="Close">
+                <FiX />
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <div className="cust-rows">
+                <div className="cust-row">
+                  <span className="cust-label">Name</span>
+                  <span className="cust-value">
+                    {customerOrder.shippingAddress.fullName || customerOrder.userName}
+                  </span>
+                </div>
+
+                <div className="cust-row">
+                  <span className="cust-label">
+                    <FiMail /> Email
+                  </span>
+                  <span className="cust-value">
+                    <a href={`mailto:${customerOrder.userEmail}`}>{customerOrder.userEmail}</a>
+                  </span>
+                </div>
+
+                <div className="cust-row">
+                  <span className="cust-label">
+                    <FiPhone /> Phone
+                  </span>
+                  <span className="cust-value">
+                    <a href={`tel:${customerOrder.shippingAddress.phone}`}>
+                      {customerOrder.shippingAddress.phone}
+                    </a>
+                  </span>
+                </div>
+
+                <div className="cust-row">
+                  <span className="cust-label">
+                    <FiMapPin /> Shipping Address
+                  </span>
+                  <span className="cust-value cust-address">
+                    {customerOrder.shippingAddress.street}
+                    <br />
+                    {customerOrder.shippingAddress.city}, {customerOrder.shippingAddress.state}{' '}
+                    {customerOrder.shippingAddress.zipCode}
+                    <br />
+                    {customerOrder.shippingAddress.country}
+                  </span>
+                </div>
+
+                <div className="cust-row">
+                  <span className="cust-label">Order</span>
+                  <span className="cust-value">{customerOrder.orderNumber}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button className="btn btn-primary" onClick={() => setCustomerOrder(null)}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Tracking Modal */}
       {trackingModal.show && (

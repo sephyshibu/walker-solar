@@ -1727,6 +1727,210 @@ body {
   user-select: none;
 }
 
+/* ==================== Orders: View + Customer detail actions ==================== */
+
+/* Extra width for the new Actions column (overrides the earlier 1040px rule) */
+.admin-table-scroll .admin-table {
+  min-width: 1180px;
+}
+
+.order-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: nowrap;
+}
+
+.btn-view-order,
+.btn-customer {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.btn-view-order:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.btn-customer:hover {
+  border-color: var(--color-info);
+  color: var(--color-info);
+}
+
+/* ---- Shared: keep tall modals scrollable ---- */
+.order-details-modal,
+.customer-modal {
+  max-width: 640px;
+  width: 100%;
+}
+
+.order-details-modal .modal-body,
+.customer-modal .modal-body {
+  max-height: 65vh;
+  overflow-y: auto;
+}
+
+/* ---- Order Details modal ---- */
+.od-meta {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.od-label {
+  display: block;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin-bottom: 0.2rem;
+}
+
+.od-value {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.od-status {
+  text-transform: capitalize;
+}
+
+.od-section-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  margin: 1.5rem 0 0.75rem;
+}
+
+.od-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.od-item {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.75rem;
+  background: var(--bg-tertiary);
+  border-radius: var(--border-radius);
+}
+
+.od-item img,
+.od-item-noimg {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--border-radius);
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--bg-secondary);
+}
+
+.od-item-noimg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 1.25rem;
+}
+
+.od-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.od-item-name {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.od-item-qty {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+}
+
+.od-item-subtotal {
+  font-weight: 600;
+  color: var(--color-primary);
+  white-space: nowrap;
+}
+
+.od-total-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 1rem;
+  margin-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.od-total-label {
+  color: var(--text-secondary);
+}
+
+.od-total-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.od-note {
+  background: var(--bg-tertiary);
+  padding: 0.75rem 1rem;
+  border-radius: var(--border-radius);
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.od-note a {
+  color: var(--color-info);
+}
+
+/* ---- Customer Details modal ---- */
+.cust-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.cust-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.cust-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+.cust-value {
+  color: var(--text-primary);
+}
+
+.cust-value a {
+  color: var(--color-info);
+}
+
+.cust-address {
+  line-height: 1.7;
+}
+
 @media (max-width: 768px) {
   .admin-toolbar-right {
     width: 100%;
