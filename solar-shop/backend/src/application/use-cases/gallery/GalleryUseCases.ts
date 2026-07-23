@@ -1,5 +1,5 @@
 import { GalleryItem, GalleryCategory, GalleryItemProps } from '../../../domain/entities/Gallery';
-import { IGalleryRepository, PaginationOptions, PaginatedResult } from '../../../domain/repositories';
+import { IGalleryRepository, PaginationOptions, PaginatedResults } from '../../../domain/repositories';
 import { AppError } from '../../../shared/errors/AppError';
 
 interface CreateGalleryItemDTO {
@@ -49,7 +49,7 @@ export class GetAllGalleryItemsUseCase {
   async execute(
     options: PaginationOptions,
     filters?: { category?: GalleryCategory; isActive?: boolean }
-  ): Promise<PaginatedResult<GalleryItem>> {
+  ): Promise<PaginatedResults<GalleryItem>> {
     return this.galleryRepository.findAll(options, filters);
   }
 }
@@ -57,7 +57,7 @@ export class GetAllGalleryItemsUseCase {
 export class GetGalleryByCategoryUseCase {
   constructor(private galleryRepository: IGalleryRepository) {}
 
-  async execute(category: GalleryCategory, options: PaginationOptions): Promise<PaginatedResult<GalleryItem>> {
+  async execute(category: GalleryCategory, options: PaginationOptions): Promise<PaginatedResults<GalleryItem>> {
     return this.galleryRepository.findByCategory(category, options);
   }
 }

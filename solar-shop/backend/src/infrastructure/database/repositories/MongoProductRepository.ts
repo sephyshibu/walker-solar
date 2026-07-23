@@ -1,5 +1,5 @@
 import { Product, ProductStatus, ProductProps } from '../../../domain/entities/Product';
-import { IProductRepository, PaginationOptions, PaginatedResult } from '../../../domain/repositories';
+import { IProductRepository, PaginationOptions, PaginatedResults } from '../../../domain/repositories';
 import { ProductModel, ProductDocument } from '../models/ProductModel';
 
 export class MongoProductRepository implements IProductRepository {
@@ -63,7 +63,7 @@ export class MongoProductRepository implements IProductRepository {
       maxPrice?: number;
       search?: string;
     }
-  ): Promise<PaginatedResult<Product>> {
+  ): Promise<PaginatedResults<Product>> {
     const query: any = {};
     
     if (filters?.category) query.category = filters.category;
@@ -134,7 +134,7 @@ export class MongoProductRepository implements IProductRepository {
     return docs.map(doc => this.documentToEntity(doc));
   }
 
-  async findByCategory(category: string, options: PaginationOptions): Promise<PaginatedResult<Product>> {
+  async findByCategory(category: string, options: PaginationOptions): Promise<PaginatedResults<Product>> {
     return this.findAll(options, { category, status: ProductStatus.ACTIVE });
   }
 
@@ -145,7 +145,7 @@ export class MongoProductRepository implements IProductRepository {
     return ProductModel.countDocuments(query);
   }
 
-  async search(query: string, options: PaginationOptions): Promise<PaginatedResult<Product>> {
+  async search(query: string, options: PaginationOptions): Promise<PaginatedResults<Product>> {
     return this.findAll(options, { search: query, status: ProductStatus.ACTIVE });
   }
 }

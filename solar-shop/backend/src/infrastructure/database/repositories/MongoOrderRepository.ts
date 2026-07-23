@@ -1,5 +1,5 @@
 import { Order, OrderStatus, OrderProps, CourierService } from '../../../domain/entities/Order';
-import { IOrderRepository, PaginationOptions, PaginatedResult } from '../../../domain/repositories';
+import { IOrderRepository, PaginationOptions, PaginatedResults } from '../../../domain/repositories';
 import { OrderModel, OrderDocument } from '../models/OrderModel';
 
 export class MongoOrderRepository implements IOrderRepository {
@@ -49,7 +49,7 @@ export class MongoOrderRepository implements IOrderRepository {
     return doc ? this.documentToEntity(doc) : null;
   }
 
-  async findByUserId(userId: string, options: PaginationOptions): Promise<PaginatedResult<Order>> {
+  async findByUserId(userId: string, options: PaginationOptions): Promise<PaginatedResults<Order>> {
     const query = { userId };
     const total = await OrderModel.countDocuments(query);
     const totalPages = Math.ceil(total / options.limit);
@@ -73,7 +73,7 @@ export class MongoOrderRepository implements IOrderRepository {
   async findAll(
     options: PaginationOptions,
     filters?: { status?: OrderStatus; userId?: string; startDate?: Date; endDate?: Date }
-  ): Promise<PaginatedResult<Order>> {
+  ): Promise<PaginatedResults<Order>> {
     const query: any = {};
     if (filters?.status) query.status = filters.status;
     if (filters?.userId) query.userId = filters.userId;

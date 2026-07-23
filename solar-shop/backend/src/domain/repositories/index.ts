@@ -14,7 +14,7 @@ export interface PaginationOptions {
   sortOrder?: 'asc' | 'desc';
 }
 
-export interface PaginatedResult<T> {
+export interface PaginatedResultss<T> {
   data: T[];
   total: number;
   page: number;
@@ -29,7 +29,7 @@ export interface IUserRepository {
   create(user: User): Promise<User>;
   findById(id: string): Promise<User | null>;
   findByEmail(email: string): Promise<User | null>;
-  findAll(options: PaginationOptions, filters?: { role?: UserRole; status?: UserStatus }): Promise<PaginatedResult<User>>;
+  findAll(options: PaginationOptions, filters?: { role?: UserRole; status?: UserStatus }): Promise<PaginatedResultss<User>>;
   update(id: string, data: Partial<User>): Promise<User | null>;
   delete(id: string): Promise<boolean>;
   updateStatus(id: string, status: UserStatus): Promise<User | null>;
@@ -52,15 +52,15 @@ export interface IProductRepository {
       maxPrice?: number;
       search?: string;
     }
-  ): Promise<PaginatedResult<Product>>;
-  findByCategory(category: string, options: PaginationOptions): Promise<PaginatedResult<Product>>;
+  ): Promise<PaginatedResults<Product>>;
+  findByCategory(category: string, options: PaginationOptions): Promise<PaginatedResults<Product>>;
   count(filters?: { category?: string; status?: ProductStatus }): Promise<number>;
   update(id: string, data: Partial<Product>): Promise<Product | null>;
   delete(id: string): Promise<boolean>;
   updateStatus(id: string, status: ProductStatus): Promise<Product | null>;
   incrementViewCount(id: string): Promise<void>;
   findFeatured(limit?: number): Promise<Product[]>;
-  search(query: string, options: PaginationOptions): Promise<PaginatedResult<Product>>;
+  search(query: string, options: PaginationOptions): Promise<PaginatedResults<Product>>;
 }
 
 // Cart Repository Interface
@@ -78,11 +78,11 @@ export interface IOrderRepository {
   create(order: Order): Promise<Order>;
   findById(id: string): Promise<Order | null>;
   findByOrderNumber(orderNumber: string): Promise<Order | null>;
-  findByUserId(userId: string, options: PaginationOptions): Promise<PaginatedResult<Order>>;
+  findByUserId(userId: string, options: PaginationOptions): Promise<PaginatedResults<Order>>;
   findAll(
     options: PaginationOptions,
     filters?: { status?: OrderStatus; userId?: string; startDate?: Date; endDate?: Date }
-  ): Promise<PaginatedResult<Order>>;
+  ): Promise<PaginatedResults<Order>>;
   update(id: string, data: Partial<Order>): Promise<Order | null>;
   removeInvoice(id: string): Promise<Order | null>;
   updateStatus(id: string, status: OrderStatus): Promise<Order | null>;
@@ -98,7 +98,7 @@ export interface ICategoryRepository {
   findAll(
     options: PaginationOptions,
     filters?: { status?: CategoryStatus }
-  ): Promise<PaginatedResult<Category>>;  // Changed from PaginatedResult<Category[]> to PaginatedResult<Category>
+  ): Promise<PaginatedResults<Category>>;  // Changed from PaginatedResults<Category[]> to PaginatedResults<Category>
   findAllActive(): Promise<Category[]>;
   update(id: string, data: Partial<Category>): Promise<Category | null>;
   delete(id: string): Promise<boolean>;
@@ -123,8 +123,8 @@ export interface IGalleryRepository {
   findAll(
     options: PaginationOptions,
     filters?: { category?: GalleryCategory; isActive?: boolean }
-  ): Promise<PaginatedResult<GalleryItem>>;
-  findByCategory(category: GalleryCategory, options: PaginationOptions): Promise<PaginatedResult<GalleryItem>>;
+  ): Promise<PaginatedResults<GalleryItem>>;
+  findByCategory(category: GalleryCategory, options: PaginationOptions): Promise<PaginatedResults<GalleryItem>>;
   update(id: string, data: Partial<GalleryItem>): Promise<GalleryItem | null>;
   delete(id: string): Promise<boolean>;
   count(filters?: { category?: GalleryCategory; isActive?: boolean }): Promise<number>;
@@ -137,7 +137,7 @@ export interface IContactRepository {
   findAll(
     options: PaginationOptions,
     filters?: { status?: ContactStatus }
-  ): Promise<PaginatedResult<Contact>>;
+  ): Promise<PaginatedResults<Contact>>;
   update(id: string, data: Partial<Contact>): Promise<Contact | null>;
   updateStatus(id: string, status: ContactStatus): Promise<Contact | null>;
   delete(id: string): Promise<boolean>;

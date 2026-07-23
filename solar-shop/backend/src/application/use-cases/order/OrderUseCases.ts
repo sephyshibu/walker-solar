@@ -1,6 +1,6 @@
 import { Order, OrderStatus, ShippingAddress, CourierService, COURIER_TRACKING_URLS } from '../../../domain/entities/Order';
 import { ProductStatus } from '../../../domain/entities/Product';
-import { IOrderRepository, ICartRepository, IProductRepository, IUserRepository, PaginationOptions, PaginatedResult } from '../../../domain/repositories';
+import { IOrderRepository, ICartRepository, IProductRepository, IUserRepository, PaginationOptions, PaginatedResults } from '../../../domain/repositories';
 import { AppError } from '../../../shared/errors/AppError';
 
 interface CreateOrderDTO {
@@ -109,7 +109,7 @@ export class GetOrderByNumberUseCase {
 export class GetUserOrdersUseCase {
   constructor(private orderRepository: IOrderRepository) {}
 
-  async execute(userId: string, options: PaginationOptions): Promise<PaginatedResult<Order>> {
+  async execute(userId: string, options: PaginationOptions): Promise<PaginatedResults<Order>> {
     return this.orderRepository.findByUserId(userId, options);
   }
 }
@@ -120,7 +120,7 @@ export class GetAllOrdersUseCase {
   async execute(
     options: PaginationOptions,
     filters?: { status?: OrderStatus; userId?: string; startDate?: Date; endDate?: Date }
-  ): Promise<PaginatedResult<Order>> {
+  ): Promise<PaginatedResults<Order>> {
     return this.orderRepository.findAll(options, filters);
   }
 }

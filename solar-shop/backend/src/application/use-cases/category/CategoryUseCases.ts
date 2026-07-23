@@ -1,5 +1,5 @@
 import { Category, CategoryStatus, CategoryProps } from '../../../domain/entities/Category';
-import { ICategoryRepository, IProductRepository, PaginationOptions, PaginatedResult } from '../../../domain/repositories';
+import { ICategoryRepository, IProductRepository, PaginationOptions, PaginatedResults } from '../../../domain/repositories';
 import { AppError } from '../../../shared/errors/AppError';
 
 interface CreateCategoryDTO {
@@ -64,7 +64,7 @@ export class GetAllCategoriesUseCase {
   async execute(
     options: PaginationOptions,
     filters?: { status?: CategoryStatus }
-  ): Promise<PaginatedResult<Category>> {
+  ): Promise<PaginatedResults<Category>> {
     return this.categoryRepository.findAll(options, filters);
   }
 }

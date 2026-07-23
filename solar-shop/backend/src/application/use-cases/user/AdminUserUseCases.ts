@@ -1,5 +1,5 @@
 import { User, UserRole, UserStatus } from '../../../domain/entities/User';
-import { IUserRepository, PaginationOptions, PaginatedResult } from '../../../domain/repositories';
+import { IUserRepository, PaginationOptions, PaginatedResults } from '../../../domain/repositories';
 import { AppError } from '../../../shared/errors/AppError';
 
 export class GetAllUsersUseCase {
@@ -8,7 +8,7 @@ export class GetAllUsersUseCase {
   async execute(
     options: PaginationOptions,
     filters?: { role?: UserRole; status?: UserStatus }
-  ): Promise<PaginatedResult<User>> {
+  ): Promise<PaginatedResults<User>> {
     return this.userRepository.findAll(options, filters);
   }
 }

@@ -1,5 +1,5 @@
 import { Contact, ContactStatus, ContactProps } from '../../../domain/entities/Contact';
-import { IContactRepository, PaginationOptions, PaginatedResult } from '../../../domain/repositories';
+import { IContactRepository, PaginationOptions, PaginatedResults } from '../../../domain/repositories';
 import { ContactModel, ContactDocument } from '../models/ContactModel';
 
 export class MongoContactRepository implements IContactRepository {
@@ -33,7 +33,7 @@ export class MongoContactRepository implements IContactRepository {
   async findAll(
     options: PaginationOptions,
     filters?: { status?: ContactStatus }
-  ): Promise<PaginatedResult<Contact>> {
+  ): Promise<PaginatedResults<Contact>> {
     const query: any = {};
     if (filters?.status) query.status = filters.status;
 

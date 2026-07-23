@@ -1,5 +1,5 @@
 import { Category, CategoryStatus, CategoryProps } from '../../../domain/entities/Category';
-import { ICategoryRepository, PaginationOptions, PaginatedResult } from '../../../domain/repositories';
+import { ICategoryRepository, PaginationOptions, PaginatedResults } from '../../../domain/repositories';
 import { CategoryModel, CategoryDocument } from '../models/CategoryModel';
 
 export class MongoCategoryRepository implements ICategoryRepository {
@@ -42,7 +42,7 @@ export class MongoCategoryRepository implements ICategoryRepository {
   async findAll(
     options: PaginationOptions,
     filters?: { status?: CategoryStatus }
-  ): Promise<PaginatedResult<Category>> {
+  ): Promise<PaginatedResults<Category>> {
     const query: any = {};
     
     if (filters?.status) query.status = filters.status;

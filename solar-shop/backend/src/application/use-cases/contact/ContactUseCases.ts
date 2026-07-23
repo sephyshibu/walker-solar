@@ -1,5 +1,5 @@
 import { Contact, ContactStatus, ContactProps } from '../../../domain/entities/Contact';
-import { IContactRepository, PaginationOptions, PaginatedResult } from '../../../domain/repositories';
+import { IContactRepository, PaginationOptions, PaginatedResults } from '../../../domain/repositories';
 import { AppError } from '../../../shared/errors/AppError';
 
 interface CreateContactDTO {
@@ -70,7 +70,7 @@ export class GetAllContactsUseCase {
   async execute(
     options: PaginationOptions,
     filters?: { status?: ContactStatus }
-  ): Promise<PaginatedResult<Contact>> {
+  ): Promise<PaginatedResults<Contact>> {
     return this.contactRepository.findAll(options, filters);
   }
 }

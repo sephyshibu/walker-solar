@@ -1,5 +1,5 @@
 import { GalleryItem, GalleryCategory, GalleryItemProps } from '../../../domain/entities/Gallery';
-import { IGalleryRepository, PaginationOptions, PaginatedResult } from '../../../domain/repositories';
+import { IGalleryRepository, PaginationOptions, PaginatedResults } from '../../../domain/repositories';
 import { GalleryModel, GalleryDocument } from '../models/GalleryModel';
 
 export class MongoGalleryRepository implements IGalleryRepository {
@@ -38,7 +38,7 @@ async getStats(): Promise<{ total: number; active: number }> {
   async findAll(
     options: PaginationOptions,
     filters?: { category?: GalleryCategory; isActive?: boolean }
-  ): Promise<PaginatedResult<GalleryItem>> {
+  ): Promise<PaginatedResults<GalleryItem>> {
     const query: any = {};
     if (filters?.category) query.category = filters.category;
     if (filters?.isActive !== undefined) query.isActive = filters.isActive;
@@ -62,7 +62,7 @@ async getStats(): Promise<{ total: number; active: number }> {
     };
   }
 
-  async findByCategory(category: GalleryCategory, options: PaginationOptions): Promise<PaginatedResult<GalleryItem>> {
+  async findByCategory(category: GalleryCategory, options: PaginationOptions): Promise<PaginatedResults<GalleryItem>> {
     return this.findAll(options, { category, isActive: true });
   }
 

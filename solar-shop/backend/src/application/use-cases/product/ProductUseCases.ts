@@ -1,5 +1,5 @@
 import { Product, ProductStatus, ProductSpecification, ProductVideo, PriceTier } from '../../../domain/entities/Product';
-import { IProductRepository, ICategoryRepository, PaginationOptions, PaginatedResult } from '../../../domain/repositories';
+import { IProductRepository, ICategoryRepository, PaginationOptions, PaginatedResults } from '../../../domain/repositories';
 import { AppError } from '../../../shared/errors/AppError';
 
 interface CreateProductDTO {
@@ -118,7 +118,7 @@ export class GetAllProductsUseCase {
   async execute(
     options: PaginationOptions,
     filters?: ProductFilters
-  ): Promise<PaginatedResult<Product>> {
+  ): Promise<PaginatedResults<Product>> {
     return this.productRepository.findAll(options, filters);
   }
 }
@@ -134,7 +134,7 @@ export class GetFeaturedProductsUseCase {
 export class GetProductsByCategoryUseCase {
   constructor(private productRepository: IProductRepository) {}
 
-  async execute(category: string, options: PaginationOptions): Promise<PaginatedResult<Product>> {
+  async execute(category: string, options: PaginationOptions): Promise<PaginatedResults<Product>> {
     return this.productRepository.findByCategory(category, options);
   }
 }
@@ -142,7 +142,7 @@ export class GetProductsByCategoryUseCase {
 export class SearchProductsUseCase {
   constructor(private productRepository: IProductRepository) {}
 
-  async execute(query: string, options: PaginationOptions): Promise<PaginatedResult<Product>> {
+  async execute(query: string, options: PaginationOptions): Promise<PaginatedResults<Product>> {
     return this.productRepository.search(query, options);
   }
 }
@@ -277,7 +277,7 @@ export class GetProductStatsUseCase {
       {}
     );
 
-    // Build category stats using the data array from PaginatedResult
+    // Build category stats using the data array from PaginatedResults
     const byCategoryEntries = await Promise.all(
       categoriesResult.data.map(async (category) => {
         const count = await this.productRepository.count({ category: category.id as any });

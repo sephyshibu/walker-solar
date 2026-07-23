@@ -1,5 +1,5 @@
 import { User, UserRole, UserStatus, UserProps } from '../../../domain/entities/User';
-import { IUserRepository, PaginationOptions, PaginatedResult } from '../../../domain/repositories';
+import { IUserRepository, PaginationOptions, PaginatedResults } from '../../../domain/repositories';
 import { UserModel, UserDocument } from '../models/UserModel';
 
 export class MongoUserRepository implements IUserRepository {
@@ -48,7 +48,7 @@ export class MongoUserRepository implements IUserRepository {
   async findAll(
     options: PaginationOptions, 
     filters?: { role?: UserRole; status?: UserStatus }
-  ): Promise<PaginatedResult<User>> {
+  ): Promise<PaginatedResults<User>> {
     const query: any = {};
     if (filters?.role) query.role = filters.role;
     if (filters?.status) query.status = filters.status;
