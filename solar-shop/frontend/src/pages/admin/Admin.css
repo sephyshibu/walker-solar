@@ -1625,3 +1625,119 @@ body {
     min-width: 180px;
   }
 }
+/* ==================== Orders: scalability additions ==================== */
+
+/* Toolbar layout (search + filter on the right) */
+.admin-toolbar-left {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.admin-count {
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 1.1rem;
+}
+
+.admin-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.admin-filter-select {
+  width: auto;
+  min-width: 160px;
+  padding-top: 0.6rem;
+  padding-bottom: 0.6rem;
+  font-size: 0.875rem;
+}
+
+/* Horizontal scroll for the dense 9-column table on narrow viewports */
+.admin-table-container.admin-table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.admin-table-scroll .admin-table {
+  min-width: 1040px;
+}
+
+/* Loading / empty / error states */
+.admin-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 4rem 2rem;
+  text-align: center;
+  color: var(--text-secondary);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+}
+
+.admin-state-icon {
+  font-size: 2.75rem;
+  color: var(--text-muted);
+}
+
+.admin-state-icon--error {
+  color: var(--color-error);
+}
+
+/* Pagination footer bar */
+.admin-pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.admin-pagination-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.admin-pagesize-select {
+  width: auto;
+  min-width: 110px;
+  padding: 0.4rem 2rem 0.4rem 0.75rem;
+  font-size: 0.8rem;
+}
+
+/* Center-align the .pagination row inside the footer (overrides its default) */
+.admin-pagination-bar .pagination {
+  margin-top: 0;
+}
+
+.pagination-ellipsis {
+  color: var(--text-muted);
+  padding: 0 0.25rem;
+  user-select: none;
+}
+
+@media (max-width: 768px) {
+  .admin-toolbar-right {
+    width: 100%;
+  }
+
+  .admin-search,
+  .admin-search-input,
+  .admin-filter-select {
+    flex: 1;
+    width: 100%;
+  }
+
+  .admin-pagination-bar {
+    justify-content: center;
+  }
+}

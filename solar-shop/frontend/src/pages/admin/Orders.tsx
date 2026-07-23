@@ -1,50 +1,135 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { FiTruck, FiExternalLink, FiX, FiUpload, FiFileText, FiDownload, FiTrash2 } from 'react-icons/fi';
-import { Order, CourierService as CourierServiceType } from '../../types';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  FiTruck,
+  FiExternalLink,
+  FiX,
+  FiUpload,
+  FiFileText,
+  FiDownload,
+  FiTrash2,
+  FiSearch,
+  FiChevronLeft,
+  FiChevronRight,
+  FiPackage,
+  FiAlertCircle,
+} from 'react-icons/fi';
+import { Order, CourierService as CourierServiceType, PaginatedResponse } from '../../types';
 import { orderApi } from '../../services/api';
 import toast from 'react-hot-toast';
 import './Admin.css';
 
+// Status flow order (forward only)
+const STATUS_ORDER = ['pending', 'confirmed', 'processing', 'shipped', 'delivered'];
+
+const STATUS_FILTERS = [
+  { value: '', label: 'All statuses' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'confirmed', label: 'Confirmed' },
+  { value: 'processing', label: 'Processing' },
+  { value: 'shipped', label: 'Shipped' },
+  { value: 'delivered', label: 'Delivered' },
+  { value: 'cancelled', label: 'Cancelled' },
+];
+
+const PAGE_SIZE_OPTIONS = [10, 25, 50];
+
+const getAvailableStatuses = (currentStatus: string) => {
+  if (currentStatus === 'cancelled') return [{ value: 'cancelled', label: 'Cancelled' }];
+  if (currentStatus === 'delivered') return [{ value: 'delivered', label: 'Delivered' }];
+
+  const currentIndex = STATUS_ORDER.indexOf(currentStatus);
+  const availableStatuses = [
+    { value: currentStatus, label: currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1) },
+  ];
+  for (let i = currentIndex + 1; i < STATUS_ORDER.length; i++) {
+    availableStatuses.push({
+      value: STATUS_ORDER[i],
+      label: STATUS_ORDER[i].charAt(0).toUpperCase() + STATUS_ORDER[i].slice(1),
+    });
+  }
+  availableStatuses.push({ value: 'cancelled', label: 'Cancelled' });
+  return availableStatuses;
+};
+
 const Orders: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [courierServices, setCourierServices] = useState<CourierServiceType[]>([]);
+
+  // Server-side pagination + filtering
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(25);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [statusFilter, setStatusFilter] = useState('');
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
   const [trackingModal, setTrackingModal] = useState<{ show: boolean; orderId: string; orderNumber: string }>({
     show: false,
     orderId: '',
-    orderNumber: ''
+    orderNumber: '',
   });
   const [trackingData, setTrackingData] = useState({ awbNumber: '', courierService: '' });
-  
+
   // Invoice upload state
   const [invoiceModal, setInvoiceModal] = useState<{ show: boolean; orderId: string; orderNumber: string }>({
     show: false,
     orderId: '',
-    orderNumber: ''
+    orderNumber: '',
   });
   const [invoiceFile, setInvoiceFile] = useState<File | null>(null);
   const [uploadingInvoice, setUploadingInvoice] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => { 
-    loadOrders(); 
-    loadCourierServices();
-  }, []);
-
-  const loadOrders = async () => {
+  const loadOrders = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     try {
-      const response = await orderApi.getAll({ page: 1, limit: 50 });
-      setOrders(response.data.data.data);
-    } catch (error) { console.error(error); }
-    finally { setLoading(false); }
-  };
+      const params: Record<string, any> = { page, limit };
+      if (statusFilter) params.status = statusFilter;
+      if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
 
-  const loadCourierServices = async () => {
+      const response = await orderApi.getAll(params);
+      const paginated: PaginatedResponse<Order> = response.data.data;
+      setOrders(paginated.data);
+      setTotal(paginated.total ?? paginated.data.length);
+      setTotalPages(Math.max(paginated.totalPages ?? 1, 1));
+    } catch (err) {
+      console.error(err);
+      setError('Failed to load orders. Please try again.');
+      setOrders([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, limit, statusFilter, debouncedSearch]);
+
+  const loadCourierServices = useCallback(async () => {
     try {
       const response = await orderApi.getCourierServices();
       setCourierServices(response.data.data);
-    } catch (error) { console.error(error); }
-  };
+    } catch (error) {
+      console.error(error);
+    }
+  }, []);
+
+  // Debounce the search box (reset to page 1 when it settles)
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  useEffect(() => {
+    loadOrders();
+  }, [loadOrders]);
+
+  useEffect(() => {
+    loadCourierServices();
+  }, [loadCourierServices]);
 
   const downloadInvoice = async (url: string, filename: string) => {
     try {
@@ -69,7 +154,9 @@ const Orders: React.FC = () => {
       await orderApi.updateStatus(id, status);
       toast.success('Order status updated');
       loadOrders();
-    } catch (error: any) { toast.error(error.response?.data?.message || 'Failed'); }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed');
+    }
   };
 
   const openTrackingModal = (orderId: string, orderNumber: string) => {
@@ -87,7 +174,6 @@ const Orders: React.FC = () => {
       toast.error('Please fill all fields');
       return;
     }
-
     try {
       await orderApi.addTracking(trackingModal.orderId, trackingData.awbNumber, trackingData.courierService);
       toast.success('Tracking information added! Order status changed to Shipped.');
@@ -98,7 +184,6 @@ const Orders: React.FC = () => {
     }
   };
 
-  // Invoice functions
   const openInvoiceModal = (orderId: string, orderNumber: string) => {
     setInvoiceModal({ show: true, orderId, orderNumber });
     setInvoiceFile(null);
@@ -130,12 +215,10 @@ const Orders: React.FC = () => {
       toast.error('Please select a file');
       return;
     }
-
     setUploadingInvoice(true);
     try {
       const formData = new FormData();
       formData.append('invoice', invoiceFile);
-      
       await orderApi.uploadInvoice(invoiceModal.orderId, formData);
       toast.success('Invoice uploaded successfully!');
       closeInvoiceModal();
@@ -149,7 +232,6 @@ const Orders: React.FC = () => {
 
   const handleDeleteInvoice = async (orderId: string) => {
     if (!window.confirm('Are you sure you want to delete this invoice?')) return;
-    
     try {
       await orderApi.deleteInvoice(orderId);
       toast.success('Invoice deleted');
@@ -159,180 +241,292 @@ const Orders: React.FC = () => {
     }
   };
 
-  const formatPrice = (price: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(price);
+  const formatPrice = (price: number) =>
+    new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(price);
 
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = { pending: 'warning', confirmed: 'info', processing: 'info', shipped: 'primary', delivered: 'success', cancelled: 'error' };
-    return colors[status] || 'secondary';
+  // Windowed page numbers so this scales to many pages
+  const getPageNumbers = (): number[] => {
+    const delta = 2;
+    const start = Math.max(1, page - delta);
+    const end = Math.min(totalPages, page + delta);
+    const pages: number[] = [];
+    for (let i = start; i <= end; i++) pages.push(i);
+    return pages;
   };
-// Status flow order (forward only)
-const STATUS_ORDER = ['pending', 'confirmed', 'processing', 'shipped', 'delivered'];
+  const pageNumbers = getPageNumbers();
 
-const getAvailableStatuses = (currentStatus: string) => {
-  // If cancelled, no changes allowed
-  if (currentStatus === 'cancelled') {
-    return [{ value: 'cancelled', label: 'Cancelled' }];
-  }
-  
-  // If delivered, no changes allowed
-  if (currentStatus === 'delivered') {
-    return [{ value: 'delivered', label: 'Delivered' }];
-  }
+  const rangeStart = total === 0 ? 0 : (page - 1) * limit + 1;
+  const rangeEnd = Math.min(page * limit, total);
+  const hasFilters = Boolean(statusFilter || debouncedSearch.trim());
 
-  const currentIndex = STATUS_ORDER.indexOf(currentStatus);
-  const availableStatuses = [];
-
-  // Add current status
-  availableStatuses.push({ 
-    value: currentStatus, 
-    label: currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1) 
-  });
-
-  // Add all forward statuses
-  for (let i = currentIndex + 1; i < STATUS_ORDER.length; i++) {
-    availableStatuses.push({ 
-      value: STATUS_ORDER[i], 
-      label: STATUS_ORDER[i].charAt(0).toUpperCase() + STATUS_ORDER[i].slice(1) 
-    });
-  }
-
-  // Always allow cancellation (except for delivered)
-  availableStatuses.push({ value: 'cancelled', label: 'Cancelled' });
-
-  return availableStatuses;
-};
   return (
     <div className="admin-page">
       <div className="container">
         <div className="admin-toolbar">
-          <h1>Orders ({orders.length})</h1>
-        </div>
-        
-        <div className="admin-table-container">
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>Order</th>
-                <th>Customer</th>
-                <th>Customer Number</th>
-                <th>Shipping Address</th>
-                <th>Items</th>
-                <th>Total</th>
-                <th>Status</th>
-                <th>Tracking</th>
-                <th>Invoice</th>
-              
-              </tr>
-            </thead>
-            <tbody>
-              {orders.map((order) => (
-<tr key={order.id}>
-  {/* 1. Existing Order Number Code */}
-  <td><strong>{order.orderNumber}</strong><br/><small>{new Date(order.createdAt).toLocaleDateString()}</small></td>
-  
-  {/* 2. Existing Customer Name Code */}
-  <td>{order.userName}<br/><small>{order.userEmail}</small></td>
-  
-  {/* 3. FIX: Add style={{ whiteSpace: 'nowrap' }} to keep phone number on one line */}
-  <td style={{ whiteSpace: 'nowrap' }}>{order.shippingAddress.phone}</td>
-  
-  {/* 4. Existing Address Code */}
-  <td>{order.shippingAddress.street}, {order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.zipCode}</td>
-  
-  {/* 5. Existing Items & Total Code */}
-  <td>{order.totalItems}</td>
-  <td>{formatPrice(order.totalAmount)}</td>
-  
-  {/* 6. FIX: Remove the inline 'style' prop from select to restore normal size */}
-  <td>
-    <select 
-      value={order.status} 
-      onChange={(e) => handleStatusChange(order.id, e.target.value)}
-      className="form-input status-select" // Added a class 'status-select' for specific styling if needed
-      // REMOVED THE INLINE STYLE HERE
-      disabled={order.status === 'cancelled' || order.status === 'delivered'}
-    >
-      {getAvailableStatuses(order.status).map((status) => (
-        <option key={status.value} value={status.value}>
-          {status.label}
-        </option>
-      ))}
-    </select>
-  </td>
-                  <td>
-                    {order.tracking ? (
-                      <div className="tracking-info-cell">
-                        <span className="tracking-awb-badge">{order.tracking.awbNumber}</span>
-                        <a 
-                          href={order.tracking.trackingUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="tracking-link"
-                          title="Track shipment"
-                        >
-                          <FiExternalLink />
-                        </a>
-                      </div>
-                    ) : (
-                      <button 
-                        className="btn btn-sm btn-add-tracking"
-                        onClick={() => openTrackingModal(order.id, order.orderNumber)}
-                        disabled={order.status === 'cancelled' || order.status === 'delivered'}
-                      >
-                        <FiTruck /> Add AWB
-                      </button>
-                    )}
-                  </td>
-                  <td>
-                    {order.tracking ? (
-                      order.invoice ? (
-                        <div className="invoice-actions">
-                          {/* <a 
-                            href={order.invoice.url}
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="btn btn-sm btn-invoice-view"
-                            title="View Invoice"
-                          >
-                            <FiFileText />
-                          </a> */}
-                          <button 
-                            onClick={() => downloadInvoice(
-                              order.invoice!.url, 
-                              order.invoice!.originalName || `invoice_${order.orderNumber}.pdf`
-                            )}
-                            className="btn btn-sm btn-invoice-download"
-                            title="Download Invoice"
-                          >
-                            <FiDownload />
-                          </button>
-                          <button 
-                            className="btn btn-sm btn-invoice-delete"
-                            onClick={() => handleDeleteInvoice(order.id)}
-                            title="Delete Invoice"
-                          >
-                            <FiTrash2 />
-                          </button>
-                        </div>
-                      ) : (
-                        <button 
-                          className="btn btn-sm btn-upload-invoice"
-                          onClick={() => openInvoiceModal(order.id, order.orderNumber)}
-                          title="Upload Invoice"
-                        >
-                          <FiUpload /> Upload
-                        </button>
-                      )
-                    ) : (
-                      <span className="invoice-na">-</span>
-                    )}
-                  </td>
-                  {/* <td>{new Date(order.createdAt).toLocaleDateString()}</td> */}
-                </tr>
+          <div className="admin-toolbar-left">
+            <h1>Orders {total > 0 && <span className="admin-count">({total})</span>}</h1>
+          </div>
+
+          <div className="admin-toolbar-right">
+            <div className="admin-search">
+              <FiSearch className="admin-search-icon" />
+              <input
+                type="text"
+                className="admin-search-input"
+                placeholder="Search order #, customer, email&hellip;"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+
+            <select
+              className="form-input admin-filter-select"
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setPage(1);
+              }}
+            >
+              {STATUS_FILTERS.map((s) => (
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
               ))}
-            </tbody>
-          </table>
+            </select>
+          </div>
         </div>
+
+        {loading ? (
+          <div className="admin-state">
+            <div className="spinner" />
+            <p>Loading orders&hellip;</p>
+          </div>
+        ) : error ? (
+          <div className="admin-state">
+            <FiAlertCircle className="admin-state-icon admin-state-icon--error" />
+            <p>{error}</p>
+            <button className="btn btn-primary" onClick={() => loadOrders()}>
+              Retry
+            </button>
+          </div>
+        ) : orders.length === 0 ? (
+          <div className="admin-state">
+            <FiPackage className="admin-state-icon" />
+            <p>{hasFilters ? 'No orders match your filters.' : 'No orders yet.'}</p>
+            {hasFilters && (
+              <button
+                className="btn btn-secondary"
+                onClick={() => {
+                  setStatusFilter('');
+                  setSearch('');
+                  setPage(1);
+                }}
+              >
+                Clear filters
+              </button>
+            )}
+          </div>
+        ) : (
+          <>
+            <div className="admin-table-container admin-table-scroll">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Order</th>
+                    <th>Customer</th>
+                    <th>Customer Number</th>
+                    <th>Shipping Address</th>
+                    <th>Items</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Tracking</th>
+                    <th>Invoice</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {orders.map((order) => (
+                    <tr key={order.id}>
+                      <td>
+                        <strong>{order.orderNumber}</strong>
+                        <br />
+                        <small>{new Date(order.createdAt).toLocaleDateString()}</small>
+                      </td>
+
+                      <td>
+                        {order.userName}
+                        <br />
+                        <small>{order.userEmail}</small>
+                      </td>
+
+                      <td style={{ whiteSpace: 'nowrap' }}>{order.shippingAddress.phone}</td>
+
+                      <td>
+                        {order.shippingAddress.street}, {order.shippingAddress.city},{' '}
+                        {order.shippingAddress.state} {order.shippingAddress.zipCode}
+                      </td>
+
+                      <td>{order.totalItems}</td>
+                      <td>{formatPrice(order.totalAmount)}</td>
+
+                      <td>
+                        <select
+                          value={order.status}
+                          onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                          className="form-input status-select"
+                          disabled={order.status === 'cancelled' || order.status === 'delivered'}
+                        >
+                          {getAvailableStatuses(order.status).map((status) => (
+                            <option key={status.value} value={status.value}>
+                              {status.label}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+
+                      <td>
+                        {order.tracking ? (
+                          <div className="tracking-info-cell">
+                            <span className="tracking-awb-badge">{order.tracking.awbNumber}</span>
+                            <a
+                              href={order.tracking.trackingUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="tracking-link"
+                              title="Track shipment"
+                            >
+                              <FiExternalLink />
+                            </a>
+                          </div>
+                        ) : (
+                          <button
+                            className="btn btn-sm btn-add-tracking"
+                            onClick={() => openTrackingModal(order.id, order.orderNumber)}
+                            disabled={order.status === 'cancelled' || order.status === 'delivered'}
+                          >
+                            <FiTruck /> Add AWB
+                          </button>
+                        )}
+                      </td>
+
+                      <td>
+                        {order.tracking ? (
+                          order.invoice ? (
+                            <div className="invoice-actions">
+                              <button
+                                onClick={() =>
+                                  downloadInvoice(
+                                    order.invoice!.url,
+                                    order.invoice!.originalName || `invoice_${order.orderNumber}.pdf`
+                                  )
+                                }
+                                className="btn btn-sm btn-invoice-download"
+                                title="Download Invoice"
+                              >
+                                <FiDownload />
+                              </button>
+                              <button
+                                className="btn btn-sm btn-invoice-delete"
+                                onClick={() => handleDeleteInvoice(order.id)}
+                                title="Delete Invoice"
+                              >
+                                <FiTrash2 />
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              className="btn btn-sm btn-upload-invoice"
+                              onClick={() => openInvoiceModal(order.id, order.orderNumber)}
+                              title="Upload Invoice"
+                            >
+                              <FiUpload /> Upload
+                            </button>
+                          )
+                        ) : (
+                          <span className="invoice-na">&mdash;</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination footer */}
+            <div className="admin-pagination-bar">
+              <div className="admin-pagination-info">
+                <span>
+                  Showing {rangeStart}&ndash;{rangeEnd} of {total}
+                </span>
+                <select
+                  className="form-input admin-pagesize-select"
+                  value={limit}
+                  onChange={(e) => {
+                    setLimit(Number(e.target.value));
+                    setPage(1);
+                  }}
+                >
+                  {PAGE_SIZE_OPTIONS.map((size) => (
+                    <option key={size} value={size}>
+                      {size} / page
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {totalPages > 1 && (
+                <div className="pagination">
+                  <button
+                    className="pagination-btn"
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page <= 1}
+                    aria-label="Previous page"
+                  >
+                    <FiChevronLeft />
+                  </button>
+
+                  {pageNumbers[0] > 1 && (
+                    <>
+                      <button className="pagination-btn" onClick={() => setPage(1)}>
+                        1
+                      </button>
+                      {pageNumbers[0] > 2 && <span className="pagination-ellipsis">&hellip;</span>}
+                    </>
+                  )}
+
+                  {pageNumbers.map((num) => (
+                    <button
+                      key={num}
+                      className={`pagination-btn ${num === page ? 'active' : ''}`}
+                      onClick={() => setPage(num)}
+                    >
+                      {num}
+                    </button>
+                  ))}
+
+                  {pageNumbers[pageNumbers.length - 1] < totalPages && (
+                    <>
+                      {pageNumbers[pageNumbers.length - 1] < totalPages - 1 && (
+                        <span className="pagination-ellipsis">&hellip;</span>
+                      )}
+                      <button className="pagination-btn" onClick={() => setPage(totalPages)}>
+                        {totalPages}
+                      </button>
+                    </>
+                  )}
+
+                  <button
+                    className="pagination-btn"
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page >= totalPages}
+                    aria-label="Next page"
+                  >
+                    <FiChevronRight />
+                  </button>
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Tracking Modal */}
@@ -346,8 +540,10 @@ const getAvailableStatuses = (currentStatus: string) => {
               </button>
             </div>
             <div className="modal-body">
-              <p className="modal-order-info">Order: <strong>{trackingModal.orderNumber}</strong></p>
-              
+              <p className="modal-order-info">
+                Order: <strong>{trackingModal.orderNumber}</strong>
+              </p>
+
               <div className="form-group">
                 <label className="form-label">Courier Service *</label>
                 <select
@@ -402,8 +598,10 @@ const getAvailableStatuses = (currentStatus: string) => {
               </button>
             </div>
             <div className="modal-body">
-              <p className="modal-order-info">Order: <strong>{invoiceModal.orderNumber}</strong></p>
-              
+              <p className="modal-order-info">
+                Order: <strong>{invoiceModal.orderNumber}</strong>
+              </p>
+
               <div className="invoice-upload-area">
                 <input
                   type="file"
@@ -438,8 +636,8 @@ const getAvailableStatuses = (currentStatus: string) => {
               <button className="btn btn-secondary" onClick={closeInvoiceModal}>
                 Cancel
               </button>
-              <button 
-                className="btn btn-primary" 
+              <button
+                className="btn btn-primary"
                 onClick={handleUploadInvoice}
                 disabled={!invoiceFile || uploadingInvoice}
               >
