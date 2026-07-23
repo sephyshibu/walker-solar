@@ -652,12 +652,14 @@
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-lg);
-  overflow: hidden;
+  overflow-x: auto;              /* horizontal scrollbar appears when needed */
+  -webkit-overflow-scrolling: touch;
 }
 
 .admin-table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 1040px; 
 }
 
 .admin-table th,
