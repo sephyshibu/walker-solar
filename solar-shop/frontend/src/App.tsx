@@ -22,6 +22,7 @@ const Profile = lazy(() => import('./pages/Profile'));
 const Wishlist = lazy(() => import('./pages/Wishlist'));
 const Gallery = lazy(() => import('./pages/Gallery'));
 const Contact = lazy(() => import('./pages/Contact'));
+const Policy = lazy(() => import('./pages/Policy'));
 
 // Admin pages
 const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
@@ -151,6 +152,12 @@ const App: React.FC = () => {
           <Route path="/products/:slug" element={<Layout><ProductDetail /></Layout>} />
           <Route path="/gallery" element={<Layout><Gallery /></Layout>} />
           <Route path="/contact" element={<Layout><Contact /></Layout>} />
+
+          {/* Policy Pages */}
+          <Route path="/shipping" element={<Layout><Policy policyKey="shipping" /></Layout>} />
+          <Route path="/returns" element={<Layout><Policy policyKey="returns" /></Layout>} />
+          <Route path="/terms" element={<Layout><Policy policyKey="terms" /></Layout>} />
+          <Route path="/privacy" element={<Layout><Policy policyKey="privacy" /></Layout>} />
 
           {/* Protected Routes */}
           <Route path="/checkout" element={
