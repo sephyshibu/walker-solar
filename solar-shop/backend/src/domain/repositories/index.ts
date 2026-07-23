@@ -14,7 +14,7 @@ export interface PaginationOptions {
   sortOrder?: 'asc' | 'desc';
 }
 
-export interface PaginatedResultss<T> {
+export interface PaginatedResults<T> {
   data: T[];
   total: number;
   page: number;
@@ -29,7 +29,7 @@ export interface IUserRepository {
   create(user: User): Promise<User>;
   findById(id: string): Promise<User | null>;
   findByEmail(email: string): Promise<User | null>;
-  findAll(options: PaginationOptions, filters?: { role?: UserRole; status?: UserStatus }): Promise<PaginatedResultss<User>>;
+  findAll(options: PaginationOptions, filters?: { role?: UserRole; status?: UserStatus }): Promise<PaginatedResults<User>>;
   update(id: string, data: Partial<User>): Promise<User | null>;
   delete(id: string): Promise<boolean>;
   updateStatus(id: string, status: UserStatus): Promise<User | null>;
