@@ -15,7 +15,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 const SITE = 'https://www.walkers.org.in';
-const API =  process.env.REACT_APP_API_URL || process.env.API_URL '';
+const API =  process.env.REACT_APP_API_URL || process.env.API_URL ||'';
 
 // ---------------------------------------------------------------------------
 // Your API's response shape is wrapped (api.get returns axios-style
