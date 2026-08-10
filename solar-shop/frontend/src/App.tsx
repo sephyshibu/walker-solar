@@ -8,6 +8,7 @@ import MouseFollower from './components/effects/MouseFollower';
 import FloatingParticles from './components/effects/FloatingParticles';
 import ThemeToggle from './components/effects/ThemeToggle';
 import { useAuthStore, useCartStore, useWishlistStore } from './store';
+
 import './styles/global.css';
 
 // Lazy load pages
@@ -23,7 +24,7 @@ const Wishlist = lazy(() => import('./pages/Wishlist'));
 const Gallery = lazy(() => import('./pages/Gallery'));
 const Contact = lazy(() => import('./pages/Contact'));
 const Policy = lazy(() => import('./pages/Policy'));
-
+const NotFound = lazy(() => import('./pages/NotFound')); 
 // Admin pages
 const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
 const AdminProducts = lazy(() => import('./pages/admin/Products'));
