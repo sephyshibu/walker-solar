@@ -1,5 +1,5 @@
 # Robots.txt for WALKERS Solar Shop
-# https://walkers.com
+# https://walkers.org.com
 
 User-agent: *
 Allow: /
