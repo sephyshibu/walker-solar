@@ -1,5 +1,5 @@
 # Robots.txt for WALKERS Solar Shop
-# https://walkers.org.com
+# https://www.walkers.org.in
 
 User-agent: *
 Allow: /
@@ -16,6 +16,10 @@ Disallow: /orders
 Disallow: /checkout
 Disallow: /wishlist
 Disallow: /cart
+Disallow: /login
+Disallow: /register
+Disallow: /products?*page=
+
 
 # Disallow API routes
 Disallow: /api/

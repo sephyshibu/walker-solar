@@ -109,9 +109,9 @@ const App: React.FC = () => {
   }, [appReady, isAuthenticated]);
 
   // Show loading screen while initializing
-  if (!appReady || isLoading) {
-    return <AppLoading />;
-  }
+  // if (!appReady || isLoading) {
+  //   return <AppLoading />;
+  // }
 
   return (
     <BrowserRouter>
@@ -224,7 +224,7 @@ const App: React.FC = () => {
           } />
 
           {/* 404 */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<Layout><NotFound /></Layout>} />
         </Routes>
       </Suspense>
     </BrowserRouter>
