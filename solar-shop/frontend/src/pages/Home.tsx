@@ -91,7 +91,7 @@ const Home: React.FC = () => {
               Solutions
             </h1>
             <p>
-              At Walkers Power Solutions, we provide premium solar energy systems 
+              At Walkers Solar, we provide premium solar energy systems 
               and high-security solar electric fencing for residential and commercial
                properties. Beyond robust perimeter protection, we specialize in 
                advanced power backup solutions utilizing the latest 

@@ -223,7 +223,7 @@ module.exports = async function handler(req, res) {
         availability: inStock
           ? 'https://schema.org/InStock'
           : 'https://schema.org/OutOfStock',
-        seller: { '@type': 'Organization', name: 'WALKERS Power Solutions' },
+        seller: { '@type': 'Organization', name: 'Walkers Solar' },
       };
     }
 
@@ -262,7 +262,7 @@ module.exports = async function handler(req, res) {
       htmlEscape(description) +
       '</p>' +
       (price ? '<p>Price: Rs. ' + htmlEscape(price) + '</p>' : '') +
-      '<p>WALKERS Power Solutions, St. Peters Junction, Pathanamthitta, Kerala 689645. Phone +91 6238093603.</p>' +
+      '<p>Walkers Solar, St. Peters Junction, Pathanamthitta, Kerala 689645. Phone +91 6238093603.</p>' +
       '</div>';
 
     html = replaceOnce(
