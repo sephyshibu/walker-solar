@@ -116,8 +116,8 @@ const App: React.FC = () => {
 
   return (
     <BrowserRouter>
-      <FloatingParticles />
-      <MouseFollower />
+      {/* <FloatingParticles /> */}
+      {/* <MouseFollower /> */}
       <ThemeToggle />
       <Toaster
         position="top-right"
