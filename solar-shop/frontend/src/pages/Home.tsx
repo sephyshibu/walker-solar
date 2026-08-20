@@ -68,7 +68,7 @@ const Home: React.FC = () => {
   const faqs = [
     {
       q: 'What does Walkers Solar sell?',
-      a: 'High-efficiency monocrystalline solar panels, on-grid and off-grid solar systems, hybrid and smart inverters, LiFePO4 lithium batteries, inverter batteries, solar lights, solar water pumps, charge controllers, mounting structures and solar electric fencing.',
+      a: 'High-efficiency monocrystalline solar panels, on-grid and off-grid solar systems, hybrid and smart inverters, LiFePO4 lithium batteries,earth power, inverter batteries, solar lights, solar water pumps, charge controllers, mounting structures and solar electric fencing.',
     },
     {
       q: 'Which areas does Walkers Solar serve?',
