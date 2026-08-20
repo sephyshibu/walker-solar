@@ -1,8 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FiMail, FiPhone, FiMapPin, FiFacebook, FiInstagram, FiYoutube } from 'react-icons/fi';
+import { FiMail, FiPhone, FiMapPin, FiInstagram } from 'react-icons/fi';
 import './Footer.css';
 import { categoryApi } from '../../services/api';
+
+// Real profiles only. An <a href="#"> is a dead link to a visitor and a dead
+// end to a crawler, and Google will not connect a profile to this business
+// unless something links to it. Add Facebook and YouTube here once those
+// accounts exist, and mirror them in the `sameAs` array of the Organization
+// node in public/index.html — that pair is what ties the accounts to the
+// business as one entity.
+//
+// URLs are stored clean: an ?igsh= suffix is Instagram share tracking, not
+// part of the profile address, and passing it around splits the signal.
+const SOCIALS: { href: string; label: string; Icon: typeof FiInstagram }[] = [
+  {
+    href: 'https://www.instagram.com/walkers__group/',
+    label: 'Walkers Group on Instagram',
+    Icon: FiInstagram,
+  },
+];
 
 interface Category {
   id: string;
@@ -42,9 +59,17 @@ const Footer: React.FC = () => {
                 clean, renewable energy.
               </p>
               <div className="social-links">
-                <a href="#" aria-label="Facebook"><FiFacebook /></a>
-                <a href="#" aria-label="Instagram"><FiInstagram /></a>
-                <a href="#" aria-label="YouTube"><FiYoutube /></a>
+                {SOCIALS.map(({ href, label, Icon }) => (
+                  <a
+                    key={label}
+                    href={href}
+                    aria-label={label}
+                    target="_blank"
+                    rel="me noopener noreferrer"
+                  >
+                    <Icon />
+                  </a>
+                ))}
               </div>
             </div>
 

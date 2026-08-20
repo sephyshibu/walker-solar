@@ -136,9 +136,20 @@ what the models were trained on and what they retrieve at answer time.
    and `7356645787` (WhatsApp link in `Contact.tsx`). Everything on-site now
    uses `+91 62380 93603`. Pick one canonical number, use it everywhere
    including every directory, and treat the others as extensions.
-5. **Real social profiles.** `Footer.tsx` links Facebook, Instagram and YouTube
-   to `href="#"`. Once real profiles exist, link them and add them to
-   `sameAs` in the `Organization` node.
+5. **Social profiles.** Instagram (`walkers__group`) is now linked from
+   `Footer.tsx` and listed in `sameAs` on both the `Organization` and
+   `LocalBusiness` nodes. Add Facebook and YouTube in both places once those
+   accounts exist — `SOCIALS` in `Footer.tsx` and the two `sameAs` arrays.
+
+   Be clear about what this can and cannot do. Instagram's own robots.txt
+   blocks `GPTBot`, `ClaudeBot`, `PerplexityBot`, `Amazonbot`,
+   `Applebot-Extended` and `Google-Extended` with `Disallow: /`, so the
+   profile can **never** be read or cited by ChatGPT, Claude, Perplexity or
+   Gemini grounding. Meta blocks them at source; nothing on our side changes
+   that. `Googlebot` *is* allowed on profile pages, and Instagram publishes
+   an `ig_seo_profile_sitemap`, so the profile can rank in ordinary Google
+   results. The realistic route to an AI answer is indirect: this site says
+   the account exists, and this site is crawlable.
 6. **Write the pages people actually ask about.** Answer engines cite pages
    that answer a whole question. Highest value for this business, in order:
    - solar subsidy in Kerala / PM Surya Ghar — what you help with, what you don't
