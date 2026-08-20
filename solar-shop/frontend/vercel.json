@@ -12,7 +12,17 @@
 
   "rewrites": [
     { "source": "/sitemap.xml", "destination": "/api/sitemap" },
+
+    { "source": "/products", "destination": "/api/render-page?path=/products" },
+    { "source": "/contact", "destination": "/api/render-page?path=/contact" },
+    { "source": "/gallery", "destination": "/api/render-page?path=/gallery" },
+    { "source": "/shipping", "destination": "/api/render-page?path=/shipping" },
+    { "source": "/returns", "destination": "/api/render-page?path=/returns" },
+    { "source": "/terms", "destination": "/api/render-page?path=/terms" },
+    { "source": "/privacy", "destination": "/api/render-page?path=/privacy" },
+
     { "source": "/products/:slug", "destination": "/api/render?slug=:slug" },
+
     { "source": "/(.*)", "destination": "/index.html" }
   ],
 
@@ -21,6 +31,13 @@
       "source": "/static/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "source": "/llms.txt",
+      "headers": [
+        { "key": "Content-Type", "value": "text/plain; charset=utf-8" },
+        { "key": "Cache-Control", "value": "public, max-age=3600" }
       ]
     }
   ]

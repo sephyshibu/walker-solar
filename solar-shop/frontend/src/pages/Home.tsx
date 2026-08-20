@@ -60,6 +60,38 @@ const Home: React.FC = () => {
     }
   };
 
+  // Kept deliberately in sync with the <!--PRERENDER--> block in
+  // public/index.html and the FAQPage JSON-LD in the same file. AI answer
+  // engines quote these answers directly, so if you edit one copy, edit all
+  // three — a visible answer with no markup, or markup with no visible
+  // answer, is worth much less than the pair.
+  const faqs = [
+    {
+      q: 'What does Walkers Solar sell?',
+      a: 'High-efficiency monocrystalline solar panels, on-grid and off-grid solar systems, hybrid and smart inverters, LiFePO4 lithium batteries, inverter batteries, solar lights, solar water pumps, charge controllers, mounting structures and solar electric fencing.',
+    },
+    {
+      q: 'Which areas does Walkers Solar serve?',
+      a: 'Pathanamthitta and the rest of Kerala, including the neighbouring Alappuzha, Kottayam, Kollam and Idukki districts. Products can be shipped anywhere in India.',
+    },
+    {
+      q: 'What is the difference between on-grid and off-grid solar?',
+      a: 'An on-grid system is tied to the KSEB grid and reduces your bill by exporting surplus generation, but it stops working during a power cut. An off-grid system stores generation in batteries and keeps running through an outage, so it suits places with an unreliable supply. A hybrid inverter combines both. We supply all three and can advise which fits your load and site.',
+    },
+    {
+      q: 'Why choose a lithium LiFePO4 battery over lead-acid?',
+      a: 'LiFePO4 batteries last several times more charge cycles than lead-acid, allow a much deeper usable discharge, charge faster, weigh far less for the same usable capacity and need no topping up with water. They cost more up front, but the cost per usable kWh over the life of the battery is normally lower.',
+    },
+    {
+      q: 'Do your products come with a warranty?',
+      a: "Yes. Every product carries the manufacturer's warranty, and the applicable period is listed on each product page.",
+    },
+    {
+      q: 'How do I get a quote?',
+      a: 'Consultations and quotes are free. Call or WhatsApp +91 62380 93603, email walkersgroup@gmail.com, or use the contact form and tell us your location and roughly what you want to power.',
+    },
+  ];
+
   const features = [
     { icon: FiShield, title: 'Quality Guarantee', desc: 'All products come with manufacturer warranty' },
     { icon: FiTruck, title: 'Fast Delivery', desc: 'Quick shipping across India' },
@@ -217,6 +249,28 @@ const Home: React.FC = () => {
                 <h3>{feature.title}</h3>
                 <p>{feature.desc}</p>
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section — also the source of the FAQPage structured data. */}
+      <section className="section faq-section">
+        <div className="container">
+          <div className="section-header">
+            <div>
+              <h2 className="section-title">Frequently Asked Questions</h2>
+              <p className="section-subtitle">
+                Solar, batteries and solar fencing in Pathanamthitta and across Kerala
+              </p>
+            </div>
+          </div>
+          <div className="faq-list">
+            {faqs.map((item, index) => (
+              <details key={index} className="faq-item" open={index === 0}>
+                <summary className="faq-question">{item.q}</summary>
+                <p className="faq-answer">{item.a}</p>
+              </details>
             ))}
           </div>
         </div>

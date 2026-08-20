@@ -151,6 +151,19 @@ module.exports = async function handler(req, res) {
         /<meta name="robots"[^>]*>/g,
         '<meta name="robots" content="noindex, follow" />'
       );
+      // Without this the 404 body is whatever the shell carries, i.e. the
+      // homepage copy served under a 404 status. Say what actually happened.
+      const gone = /<div id="root"[^>]*>[\s\S]*?<\/div>(?=\s*<\/body>)/;
+      if (gone.test(notFound)) {
+        notFound = replaceOnce(
+          notFound,
+          gone,
+          '<div id="root"><main><h1>Product not found</h1>' +
+            '<p>This product is no longer listed. ' +
+            '<a href="/products">Browse the full Walkers Solar catalogue</a> or call ' +
+            '<a href="tel:+916238093603">+91 62380 93603</a>.</p></main></div>'
+        );
+      }
       if (debug) {
         notFound = replaceOnce(
           notFound,
@@ -246,30 +259,82 @@ module.exports = async function handler(req, res) {
       '<script type="application/ld+json">' + JSON.stringify(schema) + '</script>',
     ].join('\n    ');
 
-    let html = replaceOnce(shell, /<title>[\s\S]*?<\/title>/, injected);
-    html = html
+    // Strip the shell's homepage tags BEFORE injecting, not after. Doing it
+    // in the other order deletes the tags we have just written — the global
+    // regexes cannot tell the injected canonical from the shell's own — and
+    // the page ends up with a <title> and nothing else.
+    //
+    // The LocalBusiness/FAQ @graph in index.html is deliberately left alone:
+    // it describes the business, not the page, and is valid on every URL.
+    const cleaned = shell
+      .replace(/<meta name="title"[^>]*>/g, '')
       .replace(/<meta name="description"[^>]*>/g, '')
       .replace(/<link rel="canonical"[^>]*>/g, '')
       .replace(/<meta name="robots"[^>]*>/g, '')
       .replace(/<meta property="og:(?:type|url|title|description|image)"[^>]*>/g, '')
       .replace(/<meta name="twitter:(?:url|title|description|image)"[^>]*>/g, '');
 
-    const fallback =
-      '<div id="seo-fallback" style="position:absolute;left:-9999px;top:-9999px;">' +
-      '<h1>' +
-      htmlEscape(name) +
-      '</h1><p>' +
-      htmlEscape(description) +
-      '</p>' +
-      (price ? '<p>Price: Rs. ' + htmlEscape(price) + '</p>' : '') +
-      '<p>Walkers Solar, St. Peters Junction, Pathanamthitta, Kerala 689645. Phone +91 6238093603.</p>' +
-      '</div>';
+    let html = replaceOnce(cleaned, /<title>[\s\S]*?<\/title>/, injected);
 
-    html = replaceOnce(
-      html,
-      /<div id="root"><\/div>/,
-      fallback + '<div id="root"></div>'
-    );
+    // ---- Crawlable body content -------------------------------------------
+    // Written between the <!--PRERENDER--> markers that public/index.html
+    // places inside #root. ReactDOM.createRoot().render() clears those
+    // children, so a real visitor never sees this markup — but GPTBot,
+    // OAI-SearchBot, PerplexityBot, ClaudeBot and Google-Extended do not run
+    // JavaScript, and without it they receive a blank page.
+    //
+    // Deliberately NOT positioned off-screen. Hidden text that a user can
+    // never reach is a cloaking signal; content React is about to replace
+    // is just a server-rendered fallback.
+    const specs = [];
+    if (product.capacity) specs.push('Capacity: ' + htmlEscape(product.capacity));
+    if (product.warranty) specs.push('Warranty: ' + htmlEscape(product.warranty));
+    if (product.sku) specs.push('SKU: ' + htmlEscape(product.sku));
+
+    const fallback = [
+      '<main>',
+      '<nav><a href="/">Home</a> &rsaquo; <a href="/products">Products</a> &rsaquo; ' +
+        htmlEscape(name) +
+        '</nav>',
+      '<h1>' + htmlEscape(name) + '</h1>',
+      brand ? '<p>Brand: ' + htmlEscape(brand) + '</p>' : '',
+      price
+        ? '<p>Price: Rs. ' +
+          htmlEscape(price) +
+          ' (INR). ' +
+          (inStock ? 'In stock.' : 'Currently out of stock.') +
+          '</p>'
+        : '',
+      '<p>' + htmlEscape(description) + '</p>',
+      specs.length ? '<ul><li>' + specs.join('</li><li>') + '</li></ul>' : '',
+      '<p>Sold and installed by Walkers Solar, Pathanamthitta. Every product carries the ' +
+        "manufacturer's warranty. Delivery and installation across Kerala; shipping across India.</p>",
+      '<p><a href="/products">See all solar panels, inverters, lithium batteries and solar ' +
+        'fencing products</a></p>',
+      '<h2>Contact Walkers Solar</h2>',
+      '<address><strong>Walkers Solar</strong><br />' +
+        "Walkers Building, St. Peter's Junction, Pathanamthitta Ring Road, Chittoor<br />" +
+        'Pathanamthitta, Kerala 689645, India<br />' +
+        'Phone: <a href="tel:+916238093603">+91 62380 93603</a><br />' +
+        'Email: <a href="mailto:walkersgroup@gmail.com">walkersgroup@gmail.com</a>' +
+        '</address>',
+      '<p>Open Monday to Saturday, 9:00 am to 6:00 pm. Quotes are free.</p>',
+      '</main>',
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    // Replace everything inside #root. Anchored on the element, not an HTML
+    // comment: CRA minifies the build with removeComments:true, so any
+    // <!--MARKER--> in public/index.html never reaches build/index.html. The
+    // lookahead pins the closing tag to the one just before </body>, which is
+    // #root's, so nested elements in the fallback are handled correctly.
+    const ROOT = /<div id="root"[^>]*>[\s\S]*?<\/div>(?=\s*<\/body>)/;
+    if (ROOT.test(html)) {
+      html = replaceOnce(html, ROOT, '<div id="root">' + fallback + '</div>');
+    } else {
+      notes.push('#root container not found in shell — no crawlable body rendered');
+    }
 
     if (debug && notes.length) {
       html = replaceOnce(

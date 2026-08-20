@@ -728,3 +728,67 @@
   gap: 1rem;
   flex-wrap: wrap;
 }
+/* ---------------------------------------------------------------------------
+   FAQ section
+
+   Plain <details>/<summary>: no JS, no accordion state to manage, keyboard
+   accessible for free, and the answer text is present in the DOM even when
+   collapsed — which is what search and AI crawlers read.
+   --------------------------------------------------------------------------- */
+.faq-section {
+  background: var(--bg-secondary);
+}
+
+.faq-list {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 52rem;
+}
+
+.faq-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  padding: 1rem 1.25rem;
+  transition: border-color var(--transition-fast);
+}
+
+.faq-item:hover {
+  border-color: var(--color-primary);
+}
+
+.faq-question {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1.0625rem;
+  color: var(--text-primary);
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.faq-question::-webkit-details-marker {
+  display: none;
+}
+
+.faq-question::after {
+  content: '+';
+  color: var(--color-primary);
+  font-size: 1.5rem;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: transform var(--transition-fast);
+}
+
+.faq-item[open] .faq-question::after {
+  content: '−';
+}
+
+.faq-answer {
+  margin: 0.75rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.9375rem;
+  line-height: 1.7;
+}

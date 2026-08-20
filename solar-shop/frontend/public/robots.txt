@@ -1,16 +1,41 @@
-# Robots.txt for WALKERS Solar Shop
-# https://www.walkers.org.in
+# robots.txt for WALKERS Solar — https://www.walkers.org.in
+#
+# Two audiences: classic search crawlers, and the AI answer engines
+# (ChatGPT, Perplexity, Claude, Gemini, Copilot) that now sit in front of them.
+#
+# AI crawlers are named explicitly on purpose. Several of them read only the
+# first group that matches their token, so relying on "User-agent: *" alone
+# leaves their behaviour to chance. Crawl-delay has been removed: it is
+# ignored by Googlebot and throttles the AI crawlers we WANT indexing us.
 
-User-agent: *
+# ---------------------------------------------------------------------------
+# AI answer engines and LLM crawlers — explicitly welcome
+# ---------------------------------------------------------------------------
+User-agent: GPTBot
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+User-agent: PerplexityBot
+User-agent: Perplexity-User
+User-agent: ClaudeBot
+User-agent: Claude-User
+User-agent: Claude-SearchBot
+User-agent: anthropic-ai
+User-agent: Google-Extended
+User-agent: Applebot
+User-agent: Applebot-Extended
+User-agent: Amazonbot
+User-agent: DuckAssistBot
+User-agent: meta-externalagent
+User-agent: FacebookBot
+User-agent: MistralAI-User
+User-agent: cohere-ai
+User-agent: YouBot
+User-agent: CCBot
+User-agent: Diffbot
+User-agent: PetalBot
 Allow: /
-Allow: /products
-Allow: /products/*
-Allow: /gallery
-Allow: /contact
-
-# Disallow admin and private pages
 Disallow: /admin
-Disallow: /admin/*
+Disallow: /admin/
 Disallow: /profile
 Disallow: /orders
 Disallow: /checkout
@@ -18,14 +43,25 @@ Disallow: /wishlist
 Disallow: /cart
 Disallow: /login
 Disallow: /register
-Disallow: /products?*page=
-
-
-# Disallow API routes
 Disallow: /api/
 
-# Crawl delay for politeness
-Crawl-delay: 1
+# ---------------------------------------------------------------------------
+# Everyone else, including Googlebot and bingbot
+# ---------------------------------------------------------------------------
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin/
+Disallow: /profile
+Disallow: /orders
+Disallow: /checkout
+Disallow: /wishlist
+Disallow: /cart
+Disallow: /login
+Disallow: /register
+Disallow: /api/
 
-# Sitemap location
+# Note: /products?page=N is deliberately crawlable. Blocking it stops
+# crawlers discovering the products listed on page 2 onwards.
+
 Sitemap: https://www.walkers.org.in/sitemap.xml
