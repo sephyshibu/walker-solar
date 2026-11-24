@@ -16,7 +16,7 @@ export class CreateContactUseCase {
   constructor(private contactRepository: IContactRepository) {}
 
   async execute(data: CreateContactDTO): Promise<{ contact: Contact; whatsappUrl: string }> {
-    const contact = new Contact({
+    const contact = new Contact ({
       ...data,
       status: ContactStatus.NEW
     });
